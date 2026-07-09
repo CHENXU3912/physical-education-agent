@@ -17,9 +17,12 @@ const STANDARDS = {
   "units": {
     "height": "cm", "weight": "kg", "bmi": "-",
     "run_50m": "秒", "sit_and_reach": "cm", "jump_rope_1min": "次",
-    "sit_up_1min": "次", "pull_up": "次", "run_50m_8": "分'秒",
+    "sit_up_1min": "次", "pull_up": "次", "incline_pull_up": "次",
+    "solid_ball": "米", "run_50m_8": "分'秒",
     "run_800m": "分'秒", "run_1000m": "分'秒",
-    "standing_long_jump": "cm", "balance_stand": "秒", "t_test": "秒"
+    "standing_long_jump": "cm", "balance_stand": "秒", "t_test": "秒",
+    "football_dribble": "秒", "basketball_dribble": "秒", "basketball_layup": "秒",
+    "volleyball_bump": "次"
   },
   "grades": {
     "excellent": {"name": "非常棒", "min": 90, "color": "#22c55e"},
@@ -45,24 +48,24 @@ const STANDARDS = {
       "6年级": {"height":{"low":128.8,"high":159.9},"weight":{"low":25.3,"high":52.0},"run_50m":{"low":9.1,"high":13.2,"step":0.3,"reverse":true},"sit_and_reach":{"low":8.0,"high":21.5,"step":2.0},"jump_rope_1min":{"low":80,"high":165,"step":5},"sit_up_1min":{"low":22,"high":48,"step":3},"run_50m_8":{"low":"1'20\"","high":"2'15\"","reverse":true},"standing_long_jump":{"low":150,"high":189,"step":5},"balance_stand":{"low":8,"high":35,"step":1},"t_test":{"low":10,"high":14,"step":0.1,"reverse":true}}
     },
     "初中_男生": {
-      "7年级": {"height":{"low":142.0,"high":170.9},"weight":{"low":33.5,"high":60.0},"run_50m":{"low":7.5,"high":10.0,"step":0.3,"reverse":true},"sit_and_reach":{"low":8.0,"high":22.0,"step":2.0},"pull_up":{"low":3,"high":12,"step":1},"run_1000m":{"low":"3'50\"","high":"5'10\"","reverse":true},"standing_long_jump":{"low":175,"high":225,"step":5},"balance_stand":{"low":10,"high":45,"step":1},"t_test":{"low":9,"high":12,"step":0.1,"reverse":true}},
-      "8年级": {"height":{"low":148.0,"high":175.9},"weight":{"low":37.0,"high":65.0},"run_50m":{"low":7.2,"high":9.8,"step":0.3,"reverse":true},"sit_and_reach":{"low":9.0,"high":23.5,"step":2.0},"pull_up":{"low":4,"high":13,"step":1},"run_1000m":{"low":"3'45\"","high":"5'00\"","reverse":true},"standing_long_jump":{"low":180,"high":235,"step":5},"balance_stand":{"low":10,"high":45,"step":1},"t_test":{"low":9,"high":12,"step":0.1,"reverse":true}},
-      "9年级": {"height":{"low":153.0,"high":179.9},"weight":{"low":40.5,"high":70.0},"run_50m":{"low":7.0,"high":9.5,"step":0.3,"reverse":true},"sit_and_reach":{"low":10.0,"high":25.0,"step":2.0},"pull_up":{"low":5,"high":15,"step":1},"run_1000m":{"low":"3'40\"","high":"4'55\"","reverse":true},"standing_long_jump":{"low":185,"high":250,"step":5},"balance_stand":{"low":10,"high":45,"step":1},"t_test":{"low":9,"high":12,"step":0.1,"reverse":true}}
+      "7年级": {"height":{"low":142.0,"high":170.9},"weight":{"low":33.5,"high":60.0},"run_50m":{"low":7.5,"high":10.0,"step":0.3,"reverse":true},"sit_and_reach":{"low":8.0,"high":22.0,"step":2.0},"pull_up":{"low":3,"high":12,"step":1},"solid_ball":{"low":7.7,"high":12.4,"step":0.8},"run_1000m":{"low":"3'50\"","high":"5'10\"","reverse":true},"standing_long_jump":{"low":175,"high":225,"step":5},"balance_stand":{"low":10,"high":45,"step":1},"t_test":{"low":9,"high":12,"step":0.1,"reverse":true},"football_dribble":{"low":7.5,"high":10.5,"step":0.5,"reverse":true},"basketball_dribble":{"low":20,"high":28,"step":1.3,"reverse":true},"basketball_layup":{"low":20,"high":28,"step":1.3,"reverse":true},"volleyball_bump":{"low":20,"high":40,"step":3}},
+      "8年级": {"height":{"low":148.0,"high":175.9},"weight":{"low":37.0,"high":65.0},"run_50m":{"low":7.2,"high":9.8,"step":0.3,"reverse":true},"sit_and_reach":{"low":9.0,"high":23.5,"step":2.0},"pull_up":{"low":4,"high":13,"step":1},"solid_ball":{"low":7.7,"high":12.4,"step":0.8},"run_1000m":{"low":"3'45\"","high":"5'00\"","reverse":true},"standing_long_jump":{"low":180,"high":235,"step":5},"balance_stand":{"low":10,"high":45,"step":1},"t_test":{"low":9,"high":12,"step":0.1,"reverse":true},"football_dribble":{"low":7.5,"high":10.5,"step":0.5,"reverse":true},"basketball_dribble":{"low":20,"high":28,"step":1.3,"reverse":true},"basketball_layup":{"low":20,"high":28,"step":1.3,"reverse":true},"volleyball_bump":{"low":20,"high":40,"step":3}},
+      "9年级": {"height":{"low":153.0,"high":179.9},"weight":{"low":40.5,"high":70.0},"run_50m":{"low":7.0,"high":9.5,"step":0.3,"reverse":true},"sit_and_reach":{"low":10.0,"high":25.0,"step":2.0},"pull_up":{"low":5,"high":15,"step":1},"solid_ball":{"low":7.7,"high":12.4,"step":0.8},"run_1000m":{"low":"3'40\"","high":"4'55\"","reverse":true},"standing_long_jump":{"low":185,"high":250,"step":5},"balance_stand":{"low":10,"high":45,"step":1},"t_test":{"low":9,"high":12,"step":0.1,"reverse":true},"football_dribble":{"low":7.5,"high":10.5,"step":0.5,"reverse":true},"basketball_dribble":{"low":20,"high":28,"step":1.3,"reverse":true},"basketball_layup":{"low":20,"high":28,"step":1.3,"reverse":true},"volleyball_bump":{"low":20,"high":40,"step":3}}
     },
     "初中_女生": {
-      "7年级": {"height":{"low":142.0,"high":166.9},"weight":{"low":32.0,"high":57.0},"run_50m":{"low":8.2,"high":10.8,"step":0.3,"reverse":true},"sit_and_reach":{"low":11.0,"high":23.0,"step":2.0},"sit_up_1min":{"low":18,"high":45,"step":3},"run_800m":{"low":"3'35\"","high":"5'10\"","reverse":true},"standing_long_jump":{"low":140,"high":185,"step":5},"balance_stand":{"low":10,"high":45,"step":1},"t_test":{"low":9,"high":12,"step":0.1,"reverse":true}},
-      "8年级": {"height":{"low":146.0,"high":169.9},"weight":{"low":35.0,"high":60.0},"run_50m":{"low":8.0,"high":10.6,"step":0.3,"reverse":true},"sit_and_reach":{"low":11.5,"high":24.0,"step":2.0},"sit_up_1min":{"low":21,"high":48,"step":3},"run_800m":{"low":"3'30\"","high":"5'00\"","reverse":true},"standing_long_jump":{"low":143,"high":193,"step":5},"balance_stand":{"low":10,"high":45,"step":1},"t_test":{"low":9,"high":12,"step":0.1,"reverse":true}},
-      "9年级": {"height":{"low":148.0,"high":172.9},"weight":{"low":38.0,"high":62.0},"run_50m":{"low":7.8,"high":10.5,"step":0.3,"reverse":true},"sit_and_reach":{"low":12.0,"high":25.0,"step":2.0},"sit_up_1min":{"low":24,"high":52,"step":3},"run_800m":{"low":"3'25\"","high":"4'45\"","reverse":true},"standing_long_jump":{"low":146,"high":202,"step":5},"balance_stand":{"low":10,"high":45,"step":1},"t_test":{"low":9,"high":12,"step":0.1,"reverse":true}}
+      "7年级": {"height":{"low":142.0,"high":166.9},"weight":{"low":32.0,"high":57.0},"run_50m":{"low":8.2,"high":10.8,"step":0.3,"reverse":true},"sit_and_reach":{"low":11.0,"high":23.0,"step":2.0},"sit_up_1min":{"low":18,"high":45,"step":3},"incline_pull_up":{"low":20,"high":45,"step":4},"solid_ball":{"low":5.9,"high":7.8,"step":0.3},"run_800m":{"low":"3'35\"","high":"5'10\"","reverse":true},"standing_long_jump":{"low":140,"high":185,"step":5},"balance_stand":{"low":10,"high":45,"step":1},"t_test":{"low":9,"high":12,"step":0.1,"reverse":true},"football_dribble":{"low":8.1,"high":12.0,"step":0.6,"reverse":true},"basketball_dribble":{"low":26,"high":34,"step":1.3,"reverse":true},"basketball_layup":{"low":26,"high":34,"step":1.3,"reverse":true},"volleyball_bump":{"low":20,"high":40,"step":3}},
+      "8年级": {"height":{"low":146.0,"high":169.9},"weight":{"low":35.0,"high":60.0},"run_50m":{"low":8.0,"high":10.6,"step":0.3,"reverse":true},"sit_and_reach":{"low":11.5,"high":24.0,"step":2.0},"sit_up_1min":{"low":21,"high":48,"step":3},"incline_pull_up":{"low":20,"high":45,"step":4},"solid_ball":{"low":5.9,"high":7.8,"step":0.3},"run_800m":{"low":"3'30\"","high":"5'00\"","reverse":true},"standing_long_jump":{"low":143,"high":193,"step":5},"balance_stand":{"low":10,"high":45,"step":1},"t_test":{"low":9,"high":12,"step":0.1,"reverse":true},"football_dribble":{"low":8.1,"high":12.0,"step":0.6,"reverse":true},"basketball_dribble":{"low":26,"high":34,"step":1.3,"reverse":true},"basketball_layup":{"low":26,"high":34,"step":1.3,"reverse":true},"volleyball_bump":{"low":20,"high":40,"step":3}},
+      "9年级": {"height":{"low":148.0,"high":172.9},"weight":{"low":38.0,"high":62.0},"run_50m":{"low":7.8,"high":10.5,"step":0.3,"reverse":true},"sit_and_reach":{"low":12.0,"high":25.0,"step":2.0},"sit_up_1min":{"low":24,"high":52,"step":3},"incline_pull_up":{"low":20,"high":45,"step":4},"solid_ball":{"low":5.9,"high":7.8,"step":0.3},"run_800m":{"low":"3'25\"","high":"4'45\"","reverse":true},"standing_long_jump":{"low":146,"high":202,"step":5},"balance_stand":{"low":10,"high":45,"step":1},"t_test":{"low":9,"high":12,"step":0.1,"reverse":true},"football_dribble":{"low":8.1,"high":12.0,"step":0.6,"reverse":true},"basketball_dribble":{"low":26,"high":34,"step":1.3,"reverse":true},"basketball_layup":{"low":26,"high":34,"step":1.3,"reverse":true},"volleyball_bump":{"low":20,"high":40,"step":3}}
     },
     "高中_男生": {
-      "10年级": {"height":{"low":158.0,"high":180.9},"weight":{"low":44.0,"high":75.0},"run_50m":{"low":6.9,"high":9.5,"step":0.2,"reverse":true},"sit_and_reach":{"low":10.0,"high":23.0,"step":2.0},"pull_up":{"low":4,"high":12,"step":1},"run_1000m":{"low":"3'35\"","high":"4'50\"","reverse":true},"standing_long_jump":{"low":200,"high":250,"step":5},"balance_stand":{"low":12,"high":60,"step":1},"t_test":{"low":6,"high":10,"step":0.1,"reverse":true}},
-      "11年级": {"height":{"low":160.0,"high":182.9},"weight":{"low":46.0,"high":78.0},"run_50m":{"low":6.8,"high":9.3,"step":0.2,"reverse":true},"sit_and_reach":{"low":10.5,"high":24.0,"step":2.0},"pull_up":{"low":5,"high":13,"step":1},"run_1000m":{"low":"3'30\"","high":"4'45\"","reverse":true},"standing_long_jump":{"low":205,"high":255,"step":5},"balance_stand":{"low":12,"high":60,"step":1},"t_test":{"low":6,"high":10,"step":0.1,"reverse":true}},
-      "12年级": {"height":{"low":161.0,"high":183.9},"weight":{"low":47.0,"high":80.0},"run_50m":{"low":6.7,"high":9.2,"step":0.2,"reverse":true},"sit_and_reach":{"low":11.0,"high":25.0,"step":2.0},"pull_up":{"low":5,"high":14,"step":1},"run_1000m":{"low":"3'25\"","high":"4'40\"","reverse":true},"standing_long_jump":{"low":210,"high":260,"step":5},"balance_stand":{"low":12,"high":60,"step":1},"t_test":{"low":6,"high":10,"step":0.1,"reverse":true}}
+      "10年级": {"height":{"low":158.0,"high":180.9},"weight":{"low":44.0,"high":75.0},"run_50m":{"low":6.9,"high":9.5,"step":0.2,"reverse":true},"sit_and_reach":{"low":10.0,"high":23.0,"step":2.0},"pull_up":{"low":4,"high":12,"step":1},"solid_ball":{"low":7.7,"high":12.4,"step":0.8},"run_1000m":{"low":"3'35\"","high":"4'50\"","reverse":true},"standing_long_jump":{"low":200,"high":250,"step":5},"balance_stand":{"low":12,"high":60,"step":1},"t_test":{"low":6,"high":10,"step":0.1,"reverse":true},"football_dribble":{"low":7.5,"high":10.5,"step":0.5,"reverse":true},"basketball_dribble":{"low":20,"high":28,"step":1.3,"reverse":true},"basketball_layup":{"low":20,"high":28,"step":1.3,"reverse":true},"volleyball_bump":{"low":20,"high":40,"step":3}},
+      "11年级": {"height":{"low":160.0,"high":182.9},"weight":{"low":46.0,"high":78.0},"run_50m":{"low":6.8,"high":9.3,"step":0.2,"reverse":true},"sit_and_reach":{"low":10.5,"high":24.0,"step":2.0},"pull_up":{"low":5,"high":13,"step":1},"solid_ball":{"low":7.7,"high":12.4,"step":0.8},"run_1000m":{"low":"3'30\"","high":"4'45\"","reverse":true},"standing_long_jump":{"low":205,"high":255,"step":5},"balance_stand":{"low":12,"high":60,"step":1},"t_test":{"low":6,"high":10,"step":0.1,"reverse":true},"football_dribble":{"low":7.5,"high":10.5,"step":0.5,"reverse":true},"basketball_dribble":{"low":20,"high":28,"step":1.3,"reverse":true},"basketball_layup":{"low":20,"high":28,"step":1.3,"reverse":true},"volleyball_bump":{"low":20,"high":40,"step":3}},
+      "12年级": {"height":{"low":161.0,"high":183.9},"weight":{"low":47.0,"high":80.0},"run_50m":{"low":6.7,"high":9.2,"step":0.2,"reverse":true},"sit_and_reach":{"low":11.0,"high":25.0,"step":2.0},"pull_up":{"low":5,"high":14,"step":1},"solid_ball":{"low":7.7,"high":12.4,"step":0.8},"run_1000m":{"low":"3'25\"","high":"4'40\"","reverse":true},"standing_long_jump":{"low":210,"high":260,"step":5},"balance_stand":{"low":12,"high":60,"step":1},"t_test":{"low":6,"high":10,"step":0.1,"reverse":true},"football_dribble":{"low":7.5,"high":10.5,"step":0.5,"reverse":true},"basketball_dribble":{"low":20,"high":28,"step":1.3,"reverse":true},"basketball_layup":{"low":20,"high":28,"step":1.3,"reverse":true},"volleyball_bump":{"low":20,"high":40,"step":3}}
     },
     "高中_女生": {
-      "10年级": {"height":{"low":152.0,"high":174.9},"weight":{"low":41.0,"high":65.0},"run_50m":{"low":8.1,"high":10.5,"step":0.2,"reverse":true},"sit_and_reach":{"low":13.0,"high":26.0,"step":2.0},"sit_up_1min":{"low":24,"high":50,"step":3},"run_800m":{"low":"3'20\"","high":"4'50\"","reverse":true},"standing_long_jump":{"low":148,"high":195,"step":5},"balance_stand":{"low":12,"high":60,"step":1},"t_test":{"low":6,"high":10,"step":0.1,"reverse":true}},
-      "11年级": {"height":{"low":153.0,"high":175.9},"weight":{"low":42.0,"high":66.0},"run_50m":{"low":8.0,"high":10.4,"step":0.2,"reverse":true},"sit_and_reach":{"low":13.5,"high":27.0,"step":2.0},"sit_up_1min":{"low":25,"high":51,"step":3},"run_800m":{"low":"3'15\"","high":"4'45\"","reverse":true},"standing_long_jump":{"low":150,"high":200,"step":5},"balance_stand":{"low":12,"high":60,"step":1},"t_test":{"low":6,"high":10,"step":0.1,"reverse":true}},
-      "12年级": {"height":{"low":153.5,"high":176.9},"weight":{"low":43.0,"high":67.0},"run_50m":{"low":7.9,"high":10.3,"step":0.2,"reverse":true},"sit_and_reach":{"low":14.0,"high":28.0,"step":2.0},"sit_up_1min":{"low":26,"high":52,"step":3},"run_800m":{"low":"3'10\"","high":"4'40\"","reverse":true},"standing_long_jump":{"low":152,"high":205,"step":5},"balance_stand":{"low":12,"high":60,"step":1},"t_test":{"low":6,"high":10,"step":0.1,"reverse":true}}
+      "10年级": {"height":{"low":152.0,"high":174.9},"weight":{"low":41.0,"high":65.0},"run_50m":{"low":8.1,"high":10.5,"step":0.2,"reverse":true},"sit_and_reach":{"low":13.0,"high":26.0,"step":2.0},"sit_up_1min":{"low":24,"high":50,"step":3},"incline_pull_up":{"low":20,"high":45,"step":4},"solid_ball":{"low":5.9,"high":7.8,"step":0.3},"run_800m":{"low":"3'20\"","high":"4'50\"","reverse":true},"standing_long_jump":{"low":148,"high":195,"step":5},"balance_stand":{"low":12,"high":60,"step":1},"t_test":{"low":6,"high":10,"step":0.1,"reverse":true},"football_dribble":{"low":8.1,"high":12.0,"step":0.6,"reverse":true},"basketball_dribble":{"low":26,"high":34,"step":1.3,"reverse":true},"basketball_layup":{"low":26,"high":34,"step":1.3,"reverse":true},"volleyball_bump":{"low":20,"high":40,"step":3}},
+      "11年级": {"height":{"low":153.0,"high":175.9},"weight":{"low":42.0,"high":66.0},"run_50m":{"low":8.0,"high":10.4,"step":0.2,"reverse":true},"sit_and_reach":{"low":13.5,"high":27.0,"step":2.0},"sit_up_1min":{"low":25,"high":51,"step":3},"incline_pull_up":{"low":20,"high":45,"step":4},"solid_ball":{"low":5.9,"high":7.8,"step":0.3},"run_800m":{"low":"3'15\"","high":"4'45\"","reverse":true},"standing_long_jump":{"low":150,"high":200,"step":5},"balance_stand":{"low":12,"high":60,"step":1},"t_test":{"low":6,"high":10,"step":0.1,"reverse":true},"football_dribble":{"low":8.1,"high":12.0,"step":0.6,"reverse":true},"basketball_dribble":{"low":26,"high":34,"step":1.3,"reverse":true},"basketball_layup":{"low":26,"high":34,"step":1.3,"reverse":true},"volleyball_bump":{"low":20,"high":40,"step":3}},
+      "12年级": {"height":{"low":153.5,"high":176.9},"weight":{"low":43.0,"high":67.0},"run_50m":{"low":7.9,"high":10.3,"step":0.2,"reverse":true},"sit_and_reach":{"low":14.0,"high":28.0,"step":2.0},"sit_up_1min":{"low":26,"high":52,"step":3},"incline_pull_up":{"low":20,"high":45,"step":4},"solid_ball":{"low":5.9,"high":7.8,"step":0.3},"run_800m":{"low":"3'10\"","high":"4'40\"","reverse":true},"standing_long_jump":{"low":152,"high":205,"step":5},"balance_stand":{"low":12,"high":60,"step":1},"t_test":{"low":6,"high":10,"step":0.1,"reverse":true},"football_dribble":{"low":8.1,"high":12.0,"step":0.6,"reverse":true},"basketball_dribble":{"low":26,"high":34,"step":1.3,"reverse":true},"basketball_layup":{"low":26,"high":34,"step":1.3,"reverse":true},"volleyball_bump":{"low":20,"high":40,"step":3}}
     }
   }
 };
@@ -597,19 +600,25 @@ function renderTestItems(grade, gender) {
         {key: 'jump_rope_1min', name: '1分钟跳绳', unit: '次', category: '力量素质'},
         {key: 'sit_up_1min', name: '1分钟仰卧起坐', unit: '次', category: '力量素质'},
         {key: 'pull_up', name: '引体向上', unit: '次', category: '力量素质'},
+        {key: 'incline_pull_up', name: '斜身引体', unit: '次', category: '力量素质'},
+        {key: 'solid_ball', name: '实心球', unit: '米', category: '力量素质'},
         {key: 'run_50m_8', name: '50米×8往返跑', unit: "分'秒", category: '耐力素质'},
         {key: 'run_800m', name: '800米跑', unit: "分'秒", category: '耐力素质'},
         {key: 'run_1000m', name: '1000米跑', unit: "分'秒", category: '耐力素质'},
         {key: 'standing_long_jump', name: '立定跳远', unit: 'cm', category: '爆发力'},
         {key: 'balance_stand', name: '闭眼单腿站立', unit: '秒', category: '平衡性'},
-        {key: 't_test', name: 'T型跑', unit: '秒', category: '灵敏性'}
+        {key: 't_test', name: 'T型跑', unit: '秒', category: '灵敏性'},
+        {key: 'football_dribble', name: '足球运球绕杆', unit: '秒', category: '球类技能'},
+        {key: 'basketball_dribble', name: '篮球绕杆运球', unit: '秒', category: '球类技能'},
+        {key: 'basketball_layup', name: '篮球运球上篮', unit: '秒', category: '球类技能'},
+        {key: 'volleyball_bump', name: '排球垫球', unit: '次', category: '球类技能'}
     ];
 
     // 过滤：只保留适用项目
     const items = allItems.filter(item => applicableKeys.includes(item.key));
 
     // 按分类排序
-    const categoryOrder = ['身体形态', '身体机能', '速度素质', '柔韧素质', '力量素质', '耐力素质', '爆发力', '协调性'];
+    const categoryOrder = ['身体形态', '身体机能', '速度素质', '柔韧素质', '力量素质', '耐力素质', '爆发力', '协调性', '球类技能'];
     items.sort((a, b) => categoryOrder.indexOf(a.category) - categoryOrder.indexOf(b.category));
 
     // 在身体形态分类下追加一个 BMI 评分行
@@ -651,7 +660,7 @@ function renderTestItems(grade, gender) {
 }
 
 function getStep(key) {
-    const steps = {'height':0.1,'weight':0.1,'run_50m':0.1,'sit_and_reach':0.5,'jump_rope_1min':1,'sit_up_1min':1,'pull_up':1,'standing_long_jump':1,'balance_stand':1,'t_test':0.1,'run_50m_8':1,'run_800m':1,'run_1000m':1};
+    const steps = {'height':0.1,'weight':0.1,'run_50m':0.1,'sit_and_reach':0.5,'jump_rope_1min':1,'sit_up_1min':1,'pull_up':1,'incline_pull_up':1,'solid_ball':0.1,'standing_long_jump':1,'balance_stand':1,'t_test':0.1,'run_50m_8':1,'run_800m':1,'run_1000m':1,'football_dribble':0.1,'basketball_dribble':0.1,'basketball_layup':0.1,'volleyball_bump':1};
     return steps[key] || 1;
 }
 
@@ -3615,11 +3624,13 @@ function getApplicableTestKeys(grade, gender) {
         const senior = gradeNum >= 5 ? ['run_50m_8'] : []; // 5年级起
         return [...baseKeys, ...primary, ...mid, ...senior, ...balanceAndAgility];
     } else if (level === '初中' || level === '高中') {
-        // 初中/高中：男生考1000米+引体向上，女生考800米+仰卧起坐
+        // 初中/高中：男生考1000米+引体向上+实心球(二选一)，女生考800米+仰卧起坐+斜身引体+实心球(二选一)
+        // 球类三选一：足球运球/篮球运球/排球垫球
         const endurance = gender === '男' 
-            ? ['run_1000m', 'pull_up'] 
-            : ['run_800m', 'sit_up_1min'];
-        return [...baseKeys, ...endurance, 'standing_long_jump', ...balanceAndAgility];
+            ? ['run_1000m', 'pull_up', 'solid_ball'] 
+            : ['run_800m', 'sit_up_1min', 'incline_pull_up', 'solid_ball'];
+        const ballSkills = ['football_dribble', 'basketball_dribble', 'basketball_layup', 'volleyball_bump'];
+        return [...baseKeys, ...endurance, 'standing_long_jump', ...ballSkills, ...balanceAndAgility];
     }
     return baseKeys;
 }
@@ -3634,12 +3645,18 @@ function getItemMeta(key) {
         'jump_rope_1min': { name: '1分钟跳绳', unit: '次' },
         'sit_up_1min': { name: '1分钟仰卧起坐', unit: '次' },
         'pull_up': { name: '引体向上', unit: '次' },
+        'incline_pull_up': { name: '斜身引体', unit: '次' },
+        'solid_ball': { name: '实心球', unit: '米' },
         'run_50m_8': { name: '50米×8往返跑', unit: "分'秒" },
         'run_800m': { name: '800米跑', unit: "分'秒" },
         'run_1000m': { name: '1000米跑', unit: "分'秒" },
         'standing_long_jump': { name: '立定跳远', unit: 'cm' },
         'balance_stand': { name: '闭眼单腿站立', unit: '秒' },
         't_test': { name: 'T型跑', unit: '秒' },
+        'football_dribble': { name: '足球运球绕杆', unit: '秒' },
+        'basketball_dribble': { name: '篮球绕杆运球', unit: '秒' },
+        'basketball_layup': { name: '篮球运球上篮', unit: '秒' },
+        'volleyball_bump': { name: '排球垫球', unit: '次' },
         'bmi': { name: 'BMI指数', unit: 'kg/m²' }
     };
     return metas[key] || { name: key, unit: '' };
@@ -3890,12 +3907,18 @@ function extractPhysicalTestData(data, grade, gender, lineConfidenceArr = null) 
         'jump_rope_1min': { keys: ['1分钟跳绳', '一分钟跳绳', '跳绳'], unit: '次' },
         'sit_up_1min': { keys: ['1分钟仰卧起坐', '一分钟仰卧起坐', '仰卧起坐'], unit: '次' },
         'pull_up': { keys: ['引体向上', '引体'], unit: '次' },
+        'incline_pull_up': { keys: ['斜身引体', '斜身'], unit: '次' },
+        'solid_ball': { keys: ['实心球', '掷实心球', '投实心球'], unit: '米' },
         'run_50m_8': { keys: ['50米×8往返跑', '50米×8', '50×8', '往返跑'], unit: "分'秒" },
         'run_800m': { keys: ['800米跑', '800米', '800m', '800M', '8OO米'], unit: "分'秒" },
         'run_1000m': { keys: ['1000米跑', '1000米', '1000m', '1000M', 'l000米', 'I000米', '1OOO米'], unit: "分'秒" },
         'standing_long_jump': { keys: ['立定跳远', '跳远'], unit: 'cm' },
         'balance_stand': { keys: ['平衡能力', '闭眼单腿站立', '闭眼单脚站立', '单脚闭眼', '单脚站立'], unit: '秒' },
-        't_test': { keys: ['T型跑', 'T形跑', 'T跑', '灵敏性', '灵敏'], unit: '秒' }
+        't_test': { keys: ['T型跑', 'T形跑', 'T跑', '灵敏性', '灵敏'], unit: '秒' },
+        'football_dribble': { keys: ['足球运球', '足球绕杆', '足球'], unit: '秒' },
+        'basketball_dribble': { keys: ['篮球绕杆运球', '篮球运球', '篮球绕杆'], unit: '秒' },
+        'basketball_layup': { keys: ['篮球运球上篮', '篮球上篮', '行进间运球上篮'], unit: '秒' },
+        'volleyball_bump': { keys: ['排球垫球', '排球对墙垫球', '排球'], unit: '次' }
     };
     
     // 单位到正则的映射（用于"数字+单位"优先匹配）
@@ -3905,6 +3928,7 @@ function extractPhysicalTestData(data, grade, gender, lineConfidenceArr = null) 
         '秒': /(\d+\.?\d*)\s*秒/,
         'cm': /(\d+\.?\d*)\s*cm/,
         'kg': /(\d+\.?\d*)\s*kg/,
+        '米': /(\d+\.?\d*)\s*米/,
         '分': /(\d+)\s*['′分:：]\s*(\d{1,2})\s*["″秒]?/
     };
     
