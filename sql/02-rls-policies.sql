@@ -39,8 +39,11 @@ CREATE POLICY "hours_coach_isolation" ON hours_transactions
   WITH CHECK (coach_id = auth.uid());
 
 -- ===== sync_log =====
+-- sync_log 由触发器自动写入，需要 INSERT 权限
 ALTER TABLE sync_log ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "sync_coach_isolation" ON sync_log
+CREATE POLICY "sync_coach_insert" ON sync_log
+  FOR INSERT WITH CHECK (true);
+CREATE POLICY "sync_coach_select" ON sync_log
   FOR SELECT USING (coach_id = auth.uid());
 
 -- ===== 启用 Realtime（在 Dashboard > Database > Replication 中勾选各表）=====

@@ -72,6 +72,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 1. 先初始化 UI — 无论 auth 状态如何，导航和主题都能用
     initNavigation();
     initTheme();
+    // 初始化上传页省/市选择器（TRAINING_DB 已在同一文件中定义，此时可用）
+    initUploadProvinceSelector();
+    initReportProvinceSelector();
 
     // 2. Auth 检查 — 用 try/catch + 超时保护，防止网络问题挂死
     try {
@@ -639,7 +642,7 @@ function renderTestItems(grade, gender) {
                 <span class="test-item-name">${item.name}</span>
                 <span class="test-item-unit">${item.unit}</span>
             </div>
-            <input type="number" id="test_${item.key}" placeholder="输入成绩" step="${getStep(item.key)}" oninput="calculateScore('${item.key}')">
+            <input type="${isTimeItem(item.key) ? 'text' : 'number'}" id="test_${item.key}" placeholder="${isTimeItem(item.key) ? "如 3'25\"" : '输入成绩'}" step="${getStep(item.key)}" oninput="calculateScore('${item.key}')">
             <div class="test-item-score" id="score_${item.key}">
                 <span class="score">- 分</span><span class="grade">-</span>
             </div>
@@ -650,6 +653,25 @@ function renderTestItems(grade, gender) {
 function getStep(key) {
     const steps = {'height':0.1,'weight':0.1,'run_50m':0.1,'sit_and_reach':0.5,'jump_rope_1min':1,'sit_up_1min':1,'pull_up':1,'standing_long_jump':1,'balance_stand':1,'t_test':0.1,'run_50m_8':1,'run_800m':1,'run_1000m':1};
     return steps[key] || 1;
+}
+
+// 将时间字符串解析为秒数，用于比较
+// 支持格式：3'25" / 3'25 / 3:25 / 3分25秒 / 4分10秒 / 250秒
+function parseTimeToSeconds(timeStr) {
+    if (typeof timeStr !== 'string') return null;
+    // 匹配 分'秒 格式：3'25" / 3′25″ / 3:25 / 3分25秒 / 3：25
+    const m = timeStr.match(/(\d+)\s*['\u2019\u2032:\uff1a\u5206]\s*(\d{1,2})\s*["\u201d\u2033\u79d2]?/);
+    if (m) return parseInt(m[1]) * 60 + parseInt(m[2]);
+    // 匹配纯秒数：250秒 / 250
+    const secMatch = timeStr.match(/(\d+\.?\d*)\s*\u79d2/);
+    if (secMatch) return parseFloat(secMatch[1]);
+    const num = parseFloat(timeStr);
+    return isNaN(num) ? null : num;
+}
+
+// 判断一个项目是否是时间类型（分'秒）
+function isTimeItem(key) {
+    return key === 'run_1000m' || key === 'run_800m' || key === 'run_50m_8';
 }
 
 function calculateScore(key) {
@@ -676,8 +698,8 @@ function calculateScore(key) {
         }
         return;
     }
-    const value = parseFloat(document.getElementById(`test_${key}`).value);
-    if (isNaN(value) || !currentStudent) {
+    const rawValue = document.getElementById(`test_${key}`).value.trim();
+    if (!rawValue || !currentStudent) {
         document.getElementById(`score_${key}`).innerHTML = '<span class="score">- 分</span><span class="grade">-</span>';
         return;
     }
@@ -690,7 +712,7 @@ function calculateScore(key) {
         document.getElementById(`score_${key}`).innerHTML = '<span class="score">- 分</span><span class="grade">-</span>';
         return;
     }
-    const { score, grade: level } = getScoreFromValue(value, standard, key);
+    const { score, grade: level } = getScoreFromValue(rawValue, standard, key);
     const gradeClass = {'非常棒':'grade-excellent','还不错':'grade-good','刚达标':'grade-pass','待提升':'grade-fail'};
     document.getElementById(`score_${key}`).innerHTML = `<span class="score">${score} 分</span><span class="grade ${gradeClass[level]}">${level}</span>`;
 }
@@ -699,17 +721,46 @@ function getScoreFromValue(value, standard, key) {
     let score = 0, gradeLevel = '待提升';
     const { low, high, step = 1, reverse } = standard;
 
+    // 时间类型项目（run_1000m, run_800m, run_50m_8）：将分'秒格式转为秒数再比较
+    if (isTimeItem(key)) {
+        const valSec = parseTimeToSeconds(String(value));
+        const lowSec = parseTimeToSeconds(String(low));
+        const highSec = parseTimeToSeconds(String(high));
+        if (valSec === null || lowSec === null || highSec === null) {
+            return { score: 0, grade: '待提升' };
+        }
+        // 时间类项目：reverse=true 表示越短越好
+        if (reverse) {
+            if (valSec <= lowSec) { score = 100; gradeLevel = '非常棒'; }
+            else if (valSec <= lowSec + 15) { score = 90; gradeLevel = '还不错'; }
+            else if (valSec <= lowSec + 35) { score = 80; gradeLevel = '还不错'; }
+            else if (valSec <= highSec) { score = 60; gradeLevel = '刚达标'; }
+            else { score = 40; gradeLevel = '待提升'; }
+        } else {
+            if (valSec >= highSec) { score = 100; gradeLevel = '非常棒'; }
+            else if (valSec >= highSec - 15) { score = 90; gradeLevel = '还不错'; }
+            else if (valSec >= highSec - 35) { score = 80; gradeLevel = '还不错'; }
+            else if (valSec >= lowSec) { score = 60; gradeLevel = '刚达标'; }
+            else { score = 40; gradeLevel = '待提升'; }
+        }
+        return { score, grade: gradeLevel };
+    }
+
+    // 普通数值项目
+    const numValue = typeof value === 'number' ? value : parseFloat(value);
+    if (isNaN(numValue)) return { score: 0, grade: '待提升' };
+
     if (reverse) {
-        if (value <= low) { score = 100; gradeLevel = '非常棒'; }
-        else if (value <= low + step * 2) { score = 90; gradeLevel = '还不错'; }
-        else if (value <= low + step * 4) { score = 80; gradeLevel = '还不错'; }
-        else if (value <= low + step * 6) { score = 60; gradeLevel = '刚达标'; }
+        if (numValue <= low) { score = 100; gradeLevel = '非常棒'; }
+        else if (numValue <= low + step * 2) { score = 90; gradeLevel = '还不错'; }
+        else if (numValue <= low + step * 4) { score = 80; gradeLevel = '还不错'; }
+        else if (numValue <= low + step * 6) { score = 60; gradeLevel = '刚达标'; }
         else { score = 40; gradeLevel = '待提升'; }
     } else {
-        if (value >= high) { score = 100; gradeLevel = '非常棒'; }
-        else if (value >= high - step * 2) { score = 90; gradeLevel = '还不错'; }
-        else if (value >= high - step * 4) { score = 80; gradeLevel = '还不错'; }
-        else if (value >= high - step * 6) { score = 60; gradeLevel = '刚达标'; }
+        if (numValue >= high) { score = 100; gradeLevel = '非常棒'; }
+        else if (numValue >= high - step * 2) { score = 90; gradeLevel = '还不错'; }
+        else if (numValue >= high - step * 4) { score = 80; gradeLevel = '还不错'; }
+        else if (numValue >= high - step * 6) { score = 60; gradeLevel = '刚达标'; }
         else { score = 40; gradeLevel = '待提升'; }
     }
     return { score, grade: gradeLevel };
@@ -731,8 +782,15 @@ async function submitTest() {
     const testInputs = document.querySelectorAll('.test-item input');
     testInputs.forEach(input => {
         const key = input.id.replace('test_', '');
-        const value = parseFloat(input.value);
-        if (!isNaN(value)) testData.items[key] = value;
+        const rawVal = input.value.trim();
+        if (!rawVal) return;
+        // 时间类型项目（run_1000m, run_800m, run_50m_8）保存原始字符串
+        if (isTimeItem(key)) {
+            testData.items[key] = rawVal;
+        } else {
+            const value = parseFloat(rawVal);
+            if (!isNaN(value)) testData.items[key] = value;
+        }
     });
 
     const testItemKeys = Object.keys(testData.items);
@@ -834,6 +892,10 @@ function updateSelectOptions() {
         });
         if (currentValue && students.find(s => s.id === currentValue)) select.value = currentValue;
     });
+    // 初始化报告页省份选择器
+    initReportProvinceSelector();
+    // 初始化上传页省份选择器（确保 TRAINING_DB 已就绪后再次尝试）
+    initUploadProvinceSelector();
 }
 
 function loadReportData() {
@@ -900,12 +962,12 @@ function loadReportData() {
                     const rows = Object.entries(lastTest.items).map(([key, value]) => {
                         // 身高、体重不参与评分，仅作参考
                         if (key === 'height' || key === 'weight') {
-                            return { key, html: `<tr><td>${getItemName(key)}</td><td>${value}${getItemUnit(key)}</td><td>-</td><td><span class="grade" style="color:#94a3b8">参考</span></td></tr>` };
+                            return { key, html: `<tr><td>${getItemName(key)}</td><td>${isTimeItem(key) ? value : value + getItemUnit(key)}</td><td>-</td><td><span class="grade" style="color:#94a3b8">参考</span></td></tr>` };
                         }
                         const score = lastTest.itemScores?.[key] || '-';
                         const gradeLevel = score === '-' ? '-' : getGradeLabel(score);
                         const gradeClass = score === '-' ? '' : getGradeClass(score);
-                        return { key, html: `<tr><td>${getItemName(key)}</td><td>${value}${getItemUnit(key)}</td><td>${score}</td><td><span class="grade ${gradeClass}">${gradeLevel}</span></td></tr>` };
+                        return { key, html: `<tr><td>${getItemName(key)}</td><td>${isTimeItem(key) ? value : value + getItemUnit(key)}</td><td>${score}</td><td><span class="grade ${gradeClass}">${gradeLevel}</span></td></tr>` };
                     });
                     // 计算并插入 BMI 行（体重之后），BMI 参与评分
                     if (lastTest.items.height && lastTest.items.weight) {
@@ -1325,7 +1387,76 @@ function getGradeClass(score) {
     if (score >= 90) return 'grade-excellent'; if (score >= 80) return 'grade-good'; if (score >= 60) return 'grade-pass'; return 'grade-fail';
 }
 
-function generatePDF() {
+// ==================== PDF 导出核心函数（iframe + html2canvas + jsPDF，保留彩色） ====================
+async function exportPDFFromHTML(html, filename) {
+    // 使用隐藏 iframe 渲染完整 HTML 文档，确保所有 CSS 选择器正确匹配
+    var iframe = document.createElement('iframe');
+    iframe.style.cssText = 'position:fixed;left:-10000px;top:0;width:820px;height:1200px;border:none;';
+    document.body.appendChild(iframe);
+    var iframeDoc = iframe.contentWindow.document;
+    iframeDoc.open();
+    iframeDoc.write(html);
+    iframeDoc.close();
+    // 等待 iframe 加载完成
+    await new Promise(function(resolve) {
+        if (iframe.contentWindow.document.readyState === 'complete') { setTimeout(resolve, 600); }
+        else { iframe.onload = function() { setTimeout(resolve, 600); }; }
+    });
+    try {
+        var iframeBody = iframe.contentWindow.document.body;
+        var canvas = await html2canvas(iframeBody, {
+            scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 794, windowWidth: 794,
+            onclone: function(clonedDoc) {
+                var allEls = clonedDoc.querySelectorAll('*');
+                allEls.forEach(function(el) {
+                    var computed = clonedDoc.defaultView.getComputedStyle(el);
+                    if (computed.backgroundColor && computed.backgroundColor !== 'rgba(0, 0, 0, 0)' && computed.backgroundColor !== 'transparent') { el.style.backgroundColor = computed.backgroundColor; }
+                    if (computed.background && computed.background !== 'rgba(0, 0, 0, 0)') { el.style.background = computed.background; }
+                    if (computed.color) { el.style.color = computed.color; }
+                });
+            }
+        });
+        var imgData = canvas.toDataURL('image/png');
+        var pdf = new jspdf.jsPDF('p', 'mm', 'a4');
+        var pdfWidth = pdf.internal.pageSize.getWidth();
+        var pdfHeight = pdf.internal.pageSize.getHeight();
+        var imgWidth = pdfWidth;
+        var imgHeight = (canvas.height * imgWidth) / canvas.width;
+        if (imgHeight <= pdfHeight) {
+            pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+        } else {
+            var pageHeightInPx = (pdfHeight / pdfWidth) * canvas.width;
+            var numPages = Math.ceil(canvas.height / pageHeightInPx);
+            for (var i = 0; i < numPages; i++) {
+                var pageCanvas = document.createElement('canvas');
+                pageCanvas.width = canvas.width;
+                pageCanvas.height = Math.min(pageHeightInPx, canvas.height - i * pageHeightInPx);
+                var ctx = pageCanvas.getContext('2d');
+                ctx.fillStyle = '#ffffff';
+                ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+                ctx.drawImage(canvas, 0, -i * pageHeightInPx);
+                var pageImgData = pageCanvas.toDataURL('image/png');
+                if (i > 0) pdf.addPage();
+                pdf.addImage(pageImgData, 'PNG', 0, 0, pdfWidth, (pageCanvas.height * pdfWidth) / pageCanvas.width);
+            }
+        }
+        pdf.save(filename);
+        showToast('PDF 已导出', 'success');
+    } catch (err) {
+        console.error('PDF generation error:', err);
+        showToast('PDF 导出失败，尝试打印方式...', 'error');
+        var printWindow = window.open('', '_blank', 'width=900,height=700');
+        if (printWindow) {
+            printWindow.document.write(html);
+            printWindow.document.close();
+            printWindow.onload = function() { setTimeout(function() { printWindow.print(); }, 200); };
+        }
+    } finally {
+        document.body.removeChild(iframe);
+    }
+}
+
+async function generatePDF() {
     const studentId = document.getElementById('reportStudentSelect').value;
     if (!studentId) { showToast('请先选择学生', 'error'); return; }
     const student = students.find(s => s.id === studentId);
@@ -1341,7 +1472,7 @@ function generatePDF() {
         const test1 = student.tests.find(t => t.id === testId1);
         const test2 = student.tests.find(t => t.id === testId2);
         if (test1 && test2) {
-            renderComparePDF(student, test1, test2);
+            await renderComparePDF(student, test1, test2);
             return;
         }
     }
@@ -1376,9 +1507,11 @@ function generatePDF() {
             const score = lastTest.itemScores?.[key] || '-';
             const grade = score === '-' ? '-' : getGradeLabel(score);
             const gradeColor = getGradeColor(score);
+            // 时间类型项目的值已包含格式（如 3'25"），不需要再追加单位
+            const unitSuffix = isTimeItem(key) ? '' : `<span class="unit">${getItemUnit(key)}</span>`;
             return { key, html: `<tr>
                 <td>${getItemName(key)}</td>
-                <td>${value}<span class="unit">${getItemUnit(key)}</span></td>
+                <td>${value}${unitSuffix}</td>
                 <td class="score">${score}</td>
                 <td><span class="badge" style="background:${gradeColor.bg};color:${gradeColor.text}">${grade}</span></td>
             </tr>` };
@@ -1408,6 +1541,9 @@ function generatePDF() {
     // 构建评分维度条
     const breakdown = buildScoreBreakdownHTML(lastTest);
 
+    // 构建中考评分标准表格（如果选择了省份和城市）
+    const examStandardsHTML = buildExamStandardsHTML(student);
+
     const html = `<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
@@ -1416,17 +1552,18 @@ function generatePDF() {
 <style>
   @page { size: A4; margin: 12mm 14mm; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
-  body {
+  html, body {
     font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans SC", -apple-system, sans-serif;
     color: #1a1a1a; font-size: 11px; line-height: 1.5; background: #fff;
-    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important;
   }
   .page { max-width: 182mm; margin: 0 auto; }
 
   /* 品牌条 */
   .brand-bar {
-    height: 3px; background: linear-gradient(90deg, #1a1a1a 0%, #4a4a4a 50%, #f0f0f0 100%);
+    height: 4px; background: linear-gradient(90deg, #10b981 0%, #3b82f6 50%, #f59e0b 100%);
     margin-bottom: 14px; border-radius: 0 0 2px 2px;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important;
   }
 
   /* 标题区 */
@@ -1441,6 +1578,7 @@ function generatePDF() {
   .info-item {
     display: flex; justify-content: space-between; padding: 5px 8px;
     background: #f8f9fa; border-radius: 4px;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important;
   }
   .info-item .label { color: #999; font-size: 10px; }
   .info-item .val { font-weight: 600; font-size: 11px; color: #111; }
@@ -1448,6 +1586,8 @@ function generatePDF() {
   /* 章节标题 */
   .section-title {
     font-size: 12px; font-weight: 700; color: #111; margin-bottom: 6px; letter-spacing: -0.2px;
+    padding-left: 8px; border-left: 3px solid #3b82f6;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important;
   }
 
   /* 成绩表格 */
@@ -1462,13 +1602,15 @@ function generatePDF() {
 
   /* 徽标 */
   .badge {
-    display: inline-block; padding: 1px 6px; border-radius: 3px; font-size: 9px; font-weight: 600;
+    display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 9px; font-weight: 700;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important;
   }
 
   /* 总分卡片 */
   .summary-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
   .summary-card {
     background: #f8f9fa; padding: 10px 14px; border-radius: 6px; text-align: center;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important;
   }
   .summary-card .big-number { font-size: 26px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
   .summary-card .big-label { font-size: 9px; color: #888; margin-top: 2px; letter-spacing: 0.3px; }
@@ -1477,32 +1619,49 @@ function generatePDF() {
   .bar-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 10px; }
   .bar-row { display: flex; align-items: center; padding: 2px 0; }
   .bar-label { width: 60px; font-size: 9px; flex-shrink: 0; color: #555; }
-  .bar-track { flex: 1; height: 3px; background: #eee; border-radius: 1.5px; overflow: hidden; margin: 0 6px; }
-  .bar-fill { height: 100%; border-radius: 1.5px; }
+  .bar-track { flex: 1; height: 5px; background: #eee; border-radius: 2.5px; overflow: hidden; margin: 0 6px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+  .bar-fill { height: 100%; border-radius: 2.5px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
   .bar-score { font-size: 9px; font-weight: 700; width: 24px; text-align: right; flex-shrink: 0; }
 
   /* 优势/薄弱 */
   .strength-weak { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 10px; }
-  .sw-card { padding: 8px 10px; border-radius: 6px; }
-  .sw-card.sw-strong { background: #f0f9f4; }
-  .sw-card.sw-weak { background: #fff8f0; }
+  .sw-card { padding: 8px 10px; border-radius: 6px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+  .sw-card.sw-strong { background: #d1fae5; border: 1px solid #6ee7b7; }
+  .sw-card.sw-weak { background: #fef3c7; border: 1px solid #fcd34d; }
   .sw-card h4 { font-size: 10px; font-weight: 700; margin-bottom: 3px; }
-  .sw-card.sw-strong h4 { color: #166534; }
-  .sw-card.sw-weak h4 { color: #92400e; }
+  .sw-card.sw-strong h4 { color: #059669; }
+  .sw-card.sw-weak h4 { color: #d97706; }
   .sw-card p { font-size: 10px; color: #555; }
+
+  /* 中考评分标准表 */
+  .exam-standards-box {
+    margin-bottom: 10px; padding: 10px 12px;
+    background: #eff6ff; border-radius: 6px; border-left: 3px solid #3b82f6;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important;
+  }
+  .exam-standards-box h4 { font-size: 11px; font-weight: 700; color: #1e40af; margin-bottom: 6px; }
+  .exam-standards-box .es-sub { font-size: 9px; color: #6b7280; margin-bottom: 6px; }
+  .es-table { width: 100%; border-collapse: collapse; font-size: 10px; }
+  .es-table th { background: #1e40af; color: #fff; padding: 4px 6px; text-align: left; font-weight: 600; border-radius: 3px 3px 0 0; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
+  .es-table td { padding: 3px 6px; border-bottom: 1px solid #dbeafe; color: #374151; }
+  .es-table tr:last-child td { border-bottom: none; }
+  .es-table .es-full { color: #059669; font-weight: 600; }
+  .es-table .es-pass { color: #d97706; font-weight: 600; }
 
   /* 建议区 */
   .suggestions { margin-bottom: 10px; }
   .sug-item {
-    padding: 5px 8px; background: #f8f9fa; border-radius: 4px; margin-bottom: 3px;
-    font-size: 10px; border-left: 2px solid #ddd; line-height: 1.5;
+    padding: 5px 8px; background: #eff6ff; border-radius: 4px; margin-bottom: 3px;
+    font-size: 10px; border-left: 3px solid #3b82f6; line-height: 1.5;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important;
   }
   .sug-item .tag { font-weight: 700; margin-right: 4px; font-size: 10px; }
 
   /* 健康注意 */
   .health-alert {
-    padding: 4px 8px; background: #fff5f5; border-left: 2px solid #e74c3c;
-    border-radius: 4px; font-size: 10px; margin-bottom: 10px; color: #c0392b; line-height: 1.5;
+    padding: 4px 8px; background: #fee2e2; border-left: 3px solid #ef4444;
+    border-radius: 4px; font-size: 10px; margin-bottom: 10px; color: #dc2626; line-height: 1.5;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important;
   }
 
   /* 页脚 */
@@ -1511,9 +1670,10 @@ function generatePDF() {
     display: flex; justify-content: space-between; font-size: 9px; color: #aaa;
   }
   .footer .coach-line { border-top: 1px solid #ccc; width: 80px; display: inline-block; margin: 0 4px; }
+  .footer-note { margin-top: 4px; font-size: 9px; color: #888; line-height: 1.5; }
 
   @media print {
-    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    html, body, * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; color-adjust: exact !important; }
   }
 </style>
 </head>
@@ -1554,6 +1714,8 @@ function generatePDF() {
     ${breakdown}
   </div>
 
+  ${examStandardsHTML}
+
   <div class="strength-weak">
     <div class="sw-card sw-strong">
       <h4>&#x25B2; 优势项目</h4>
@@ -1584,27 +1746,137 @@ function generatePDF() {
     <p>* 评分标准参考《国家学生体质健康标准（2014年修订）》</p>
   </div>
 </div>
-<script>window.print();</script>
+<script>window.onload=function(){setTimeout(function(){window.print();},200);};</script>
 </body>
 </html>`;
 
-    // 写入新窗口并触发打印
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
-    if (!printWindow) {
-        showToast('请允许浏览器弹窗以导出 PDF', 'error');
+    await exportPDFFromHTML(html, `体质测试报告_${student.name}_${lastTest.date || ''}.pdf`);
+}
+
+// ==================== 报告页省份/城市选择器 ====================
+function onReportProvinceChange() {
+    const province = document.getElementById('reportProvinceSelect').value;
+    const citySelect = document.getElementById('reportCitySelect');
+    if (province) {
+        const provInfo = TRAINING_DB.nationalProvinces[province];
+        if (provInfo) {
+            citySelect.innerHTML = '<option value="">-- 选择城市 --</option>' +
+                provInfo.cities.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+        loadZhongkaoData(province);
+    } else {
+        citySelect.innerHTML = '<option value="">-- 选择城市 --</option>';
+    }
+}
+
+function onReportCityChange() {
+    // 选择城市后无需做其他操作，导出 PDF 时读取
+}
+
+// 初始化报告页省份选择器（填充省份选项）
+function initReportProvinceSelector() {
+    const provSelect = document.getElementById('reportProvinceSelect');
+    if (!provSelect || provSelect.options.length > 1) return;
+    const provinces = Object.keys(TRAINING_DB.nationalProvinces);
+    const ordered = ['四川'].concat(provinces.filter(p => p !== '四川'));
+    provSelect.innerHTML = '<option value="">-- 选择省份 --</option>' +
+        ordered.map(p => `<option value="${p}">${p}</option>`).join('');
+}
+
+// ==================== 上传页省份/城市选择器 ====================
+// 上传页省份选择器初始化（填充省份选项）
+function initUploadProvinceSelector() {
+    const provSelect = document.getElementById('uploadProvinceSelect');
+    if (!provSelect || provSelect.options.length > 1) return;
+    // 安全检查：TRAINING_DB 可能在数据文件加载前被调用
+    if (typeof TRAINING_DB === 'undefined' || !TRAINING_DB.nationalProvinces) return;
+    const provinces = Object.keys(TRAINING_DB.nationalProvinces);
+    const ordered = ['四川'].concat(provinces.filter(p => p !== '四川'));
+    provSelect.innerHTML = '<option value="">-- 选择省份 --</option>' +
+        ordered.map(p => `<option value="${p}">${p}</option>`).join('');
+}
+
+// 上传页省份变化时，填充城市列表
+function onUploadProvinceChange() {
+    const province = document.getElementById('uploadProvinceSelect').value;
+    const citySelect = document.getElementById('uploadCitySelect');
+    if (!citySelect) return;
+    if (province) {
+        const provInfo = TRAINING_DB.nationalProvinces[province];
+        if (provInfo) {
+            citySelect.innerHTML = '<option value="">-- 选择城市 --</option>' +
+                provInfo.cities.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+    } else {
+        citySelect.innerHTML = '<option value="">-- 选择城市 --</option>';
+    }
+}
+
+// 上传页城市变化时，显示该地区中考信息
+function onUploadCityChange() {
+    const province = document.getElementById('uploadProvinceSelect').value;
+    const city = document.getElementById('uploadCitySelect').value;
+    const infoDiv = document.getElementById('uploadExamInfo');
+    if (!infoDiv) return;
+    if (!province || !city) {
+        infoDiv.innerHTML = '';
         return;
     }
-    printWindow.document.write(html);
-    printWindow.document.close();
-    // onafterprint 在打印完成后关闭窗口
-    printWindow.onafterprint = () => {
-        printWindow.close();
-        showToast('PDF 已导出', 'success');
-    };
+    // 异步加载并显示该地区中考体育信息
+    loadZhongkaoData(province).then(data => {
+        if (!data || !data.cities || !data.cities[city]) {
+            infoDiv.innerHTML = `<div style="font-size:12px;color:var(--text-light);padding:6px 0;">暂无${province}${city}的详细中考体育标准</div>`;
+            return;
+        }
+        const cityData = data.cities[city];
+        const commonProjects = data.commonProjects || {};
+        let projectNames = [];
+        if (cityData.projects) {
+            cityData.projects.forEach(p => {
+                if (p.items) projectNames.push(...p.items.map(id => commonProjects[id]?.name || id));
+                if (p.items_male) projectNames.push(...p.items_male.map(id => commonProjects[id]?.name || id));
+                if (p.items_female) projectNames.push(...p.items_female.map(id => commonProjects[id]?.name || id));
+            });
+        }
+        infoDiv.innerHTML = `<div style="font-size:12px;color:var(--text-secondary);padding:6px 10px;background:var(--bg-secondary);border-radius:6px;">
+            📋 ${province} · ${city}中考体育（总分${cityData.totalScore || ''}分）${projectNames.length ? ' · 含：' + [...new Set(projectNames)].join('、') : ''}
+        </div>`;
+    });
+}
+
+// 构建中考评分标准 HTML（用于 PDF 报告）
+function buildExamStandardsHTML(student) {
+    const province = document.getElementById('reportProvinceSelect')?.value || currentExamProvince || '';
+    const city = document.getElementById('reportCitySelect')?.value || currentExamCity || '';
+    if (!province || !city) return '';
+    const data = zhongkaoDataCache[province];
+    if (!data || !data.cities || !data.cities[city]) return '';
+    const cityData = data.cities[city];
+    const commonProjects = data.commonProjects || {};
+    const isMale = student.gender !== '女';
+    const fullScore = isMale ? (cityData.fullScore_male || {}) : (cityData.fullScore_female || {});
+    const passScore = isMale ? (cityData.passScore_male || {}) : (cityData.passScore_female || {});
+    const allKeys = [...new Set([...Object.keys(fullScore), ...Object.keys(passScore)])];
+    if (allKeys.length === 0) return '';
+    const genderLabel = isMale ? '男' : '女';
+    let rows = allKeys.map(key => {
+        const name = commonProjects[key]?.name || key;
+        const fs = fullScore[key] || '—';
+        const ps = passScore[key] || '—';
+        return `<tr><td>${name}</td><td class="es-full">${fs}</td><td class="es-pass">${ps}</td></tr>`;
+    }).join('');
+    return `<div class="exam-standards-box">
+        <h4>🎯 ${province} · ${city}中考体育评分标准（${genderLabel}生）</h4>
+        <div class="es-sub">总分${cityData.totalScore}分 · ${cityData.structure || ''}</div>
+        <table class="es-table">
+            <thead><tr><th>项目</th><th>满分标准</th><th>及格标准</th></tr></thead>
+            <tbody>${rows}</tbody>
+        </table>
+    </div>`;
 }
 
 // ==================== 对比报告 PDF 渲染 ====================
-function renderComparePDF(student, test1, test2) {
+async function renderComparePDF(student, test1, test2) {
     const items1 = test1.items || {};
     const items2 = test2.items || {};
     const scores1 = test1.itemScores || {};
@@ -1621,8 +1893,10 @@ function renderComparePDF(student, test1, test2) {
     const tableRows = orderedKeys.map(key => {
         const name = getItemName(key);
         const unit = getItemUnit(key);
-        const value1 = items1[key] !== undefined ? `${items1[key]}${unit}` : '-';
-        const value2 = items2[key] !== undefined ? `${items2[key]}${unit}` : '-';
+        const isTime = isTimeItem(key);
+        // 时间类型项目的值已包含格式（如 3'25"），不需要再追加单位
+        const value1 = items1[key] !== undefined ? (isTime ? `${items1[key]}` : `${items1[key]}${unit}`) : '-';
+        const value2 = items2[key] !== undefined ? (isTime ? `${items2[key]}` : `${items2[key]}${unit}`) : '-';
         const isHW = key === 'height' || key === 'weight';
         const score1 = isHW ? '-' : (scores1[key] || '-');
         const score2 = isHW ? '-' : (scores2[key] || '-');
@@ -1698,7 +1972,7 @@ function renderComparePDF(student, test1, test2) {
   }
   .page { max-width: 182mm; margin: 0 auto; }
   .brand-bar {
-    height: 3px; background: linear-gradient(90deg, #1a1a1a 0%, #4a4a4a 50%, #f0f0f0 100%);
+    height: 4px; background: linear-gradient(90deg, #10b981 0%, #3b82f6 50%, #f59e0b 100%);
     margin-bottom: 14px; border-radius: 0 0 2px 2px;
   }
   .header { margin-bottom: 14px; display: flex; justify-content: space-between; align-items: baseline; }
@@ -1717,11 +1991,13 @@ function renderComparePDF(student, test1, test2) {
 
   .section-title {
     font-size: 12px; font-weight: 700; color: #111; margin-bottom: 6px; letter-spacing: -0.2px;
+    padding-left: 8px; border-left: 3px solid #3b82f6;
   }
 
   .summary-cards { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
   .summary-card {
     background: #f8f9fa; padding: 10px 14px; border-radius: 6px; text-align: center;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
   }
   .summary-card .big-number { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; line-height: 1.1; }
   .summary-card .big-label { font-size: 9px; color: #888; margin-top: 2px; letter-spacing: 0.3px; }
@@ -1740,15 +2016,16 @@ function renderComparePDF(student, test1, test2) {
   .analysis-row { display: flex; gap: 12px; flex-wrap: wrap; }
   .analysis-card {
     flex: 1; min-width: 0; padding: 8px 10px; border-radius: 6px; font-size: 10px;
+    -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important;
   }
   .analysis-card h5 { font-size: 11px; font-weight: 700; margin-bottom: 4px; }
   .analysis-card p { color: #555; line-height: 1.6; }
-  .ac-up { background: #f0fdf4; }
-  .ac-up h5 { color: #166534; }
-  .ac-down { background: #fef2f2; }
-  .ac-down h5 { color: #991b1b; }
-  .ac-body { background: #eff6ff; flex-basis: 100%; }
-  .ac-body h5 { color: #1e40af; }
+  .ac-up { background: #d1fae5; border: 1px solid #6ee7b7; }
+  .ac-up h5 { color: #059669; }
+  .ac-down { background: #fee2e2; border: 1px solid #fca5a5; }
+  .ac-down h5 { color: #dc2626; }
+  .ac-body { background: #dbeafe; border: 1px solid #93c5fd; flex-basis: 100%; }
+  .ac-body h5 { color: #2563eb; }
 
   .footer {
     margin-top: 12px; padding-top: 6px; border-top: 1px solid #e8e8e8;
@@ -1756,6 +2033,10 @@ function renderComparePDF(student, test1, test2) {
   }
   .footer .coach-line { border-top: 1px solid #ccc; width: 80px; display: inline-block; margin: 0 4px; }
   .footer-note { margin-top: 4px; font-size: 9px; color: #888; line-height: 1.5; }
+  @media print {
+    * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    body { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  }
 </style>
 </head>
 <body>
@@ -1823,30 +2104,20 @@ function renderComparePDF(student, test1, test2) {
     <p>* 评分标准参考《国家学生体质健康标准（2014年修订）》</p>
   </div>
 </div>
-<script>window.print();</script>
+<script>window.onload=function(){setTimeout(function(){window.print();},200);};</script>
 </body>
 </html>`;
 
-    const printWindow = window.open('', '_blank', 'width=900,height=700');
-    if (!printWindow) {
-        showToast('请允许浏览器弹窗以导出 PDF', 'error');
-        return;
-    }
-    printWindow.document.write(html);
-    printWindow.document.close();
-    printWindow.onafterprint = () => {
-        printWindow.close();
-        showToast('对比 PDF 已导出', 'success');
-    };
+    await exportPDFFromHTML(html, `体测对比报告_${student.name}.pdf`);
 }
 
-// 获取等级对应的颜色（用于报告文字配色）
+// 获取等级对应的颜色（用于报告文字配色）— 使用高饱和度确保打印可见
 function getGradeColor(score) {
-    if (score >= 90) return { bg: '#ecfdf5', text: '#065f46' };       // 非常棒 - 深绿
-    if (score >= 80) return { bg: '#eff6ff', text: '#1e40af' };       // 还不错 - 深蓝
-    if (score >= 60) return { bg: '#fffbeb', text: '#92400e' };       // 刚达标 - 深琥珀  
-    if (typeof score === 'number') return { bg: '#fef2f2', text: '#991b1b' }; // 待提升 - 深红
-    return { bg: '#f8f9fa', text: '#888' };                           // 无数据
+    if (score >= 90) return { bg: '#d1fae5', text: '#059669', bar: '#10b981' };       // 非常棒 - 绿
+    if (score >= 80) return { bg: '#dbeafe', text: '#2563eb', bar: '#3b82f6' };       // 还不错 - 蓝
+    if (score >= 60) return { bg: '#fef3c7', text: '#d97706', bar: '#f59e0b' };       // 刚达标 - 琥珀
+    if (typeof score === 'number') return { bg: '#fee2e2', text: '#dc2626', bar: '#ef4444' }; // 待提升 - 红
+    return { bg: '#f1f5f9', text: '#64748b', bar: '#94a3b8' };                        // 无数据
 }
 
 // 构建得分维度进度条
@@ -1859,7 +2130,7 @@ function buildScoreBreakdownHTML(lastTest) {
         const gc = getGradeColor(score);
         return `<div class="bar-row">
             <span class="bar-label">${getItemName(key)}</span>
-            <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${gc.text}"></div></div>
+            <div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:${gc.bar || gc.text}"></div></div>
             <span class="bar-score" style="color:${gc.text}">${score}</span>
         </div>`;
     }).join('');
@@ -2034,11 +2305,11 @@ function generateExcel() {
     Object.entries(lastTest.items).forEach(([key, value]) => {
         // 身高、体重不参与评分
         if (key === 'height' || key === 'weight') {
-            wsData.push([getItemName(key), value + getItemUnit(key), '-', '参考']);
+            wsData.push([getItemName(key), isTimeItem(key) ? value : value + getItemUnit(key), '-', '参考']);
         } else {
             const score = lastTest.itemScores?.[key] || '-';
             const grade = score === '-' ? '-' : getGradeLabel(score);
-            wsData.push([getItemName(key), value + getItemUnit(key), score, grade]);
+            wsData.push([getItemName(key), isTimeItem(key) ? value : value + getItemUnit(key), score, grade]);
         }
     });
     // BMI 也参与评分
@@ -2116,8 +2387,10 @@ function renderCompareExcel(student, test1, test2) {
     orderedKeys.forEach(key => {
         const isHW = key === 'height' || key === 'weight';
         const unit = getItemUnit(key);
-        const value1 = items1[key] !== undefined ? `${items1[key]}${unit}` : '-';
-        const value2 = items2[key] !== undefined ? `${items2[key]}${unit}` : '-';
+        const isTime = isTimeItem(key);
+        // 时间类型项目的值已包含格式（如 3'25"），不需要再追加单位
+        const value1 = items1[key] !== undefined ? (isTime ? `${items1[key]}` : `${items1[key]}${unit}`) : '-';
+        const value2 = items2[key] !== undefined ? (isTime ? `${items2[key]}` : `${items2[key]}${unit}`) : '-';
         const score1 = isHW ? '-' : (scores1[key] || '-');
         const score2 = isHW ? '-' : (scores2[key] || '-');
         let change = '-';
@@ -2470,26 +2743,70 @@ const TRAINING_DB = {
         junior_high: { name:"初中阶段", ageRange:"12-15岁", focus:["力量(一般力量)","速度(第二敏感期)","有氧耐力","柔韧性(第二敏感期)"], principle:"力量以徒手和轻负荷为主；有氧耐力为主要方向；注意柔韧性维持", sensitive:["一般力量敏感期","速度第二敏感期","柔韧性第二敏感期","有氧耐力敏感期"], note:"青春期生长突增期，易出现柔韧性下降和协调性暂时紊乱" },
         senior_high: { name:"高中阶段", ageRange:"15-18岁", focus:["专项力量","无氧耐力","速度力量/爆发力","速度耐力"], principle:"系统化力量训练；无氧耐力比例增加；结合心率监控科学安排负荷", sensitive:["专项力量敏感期","无氧耐力敏感期","爆发力敏感期"], note:"可承受接近成人训练负荷，但骨骺未完全闭合" }
     },
-    sichuanCities: ["成都","绵阳","自贡","攀枝花","泸州","德阳","广元","遂宁","内江","乐山","资阳","宜宾","南充","达州","雅安","广安","巴中","眉山","阿坝","甘孜","凉山"]
+    sichuanCities: ["成都","绵阳","自贡","攀枝花","泸州","德阳","广元","遂宁","内江","乐山","资阳","宜宾","南充","达州","雅安","广安","巴中","眉山","阿坝","甘孜","凉山"],
+    // 全国省份 -> 城市 映射（中考体育数据文件按省份命名 data/zhongkao-{province}.json）
+    nationalProvinces: {
+        "四川": { cities: ["成都","绵阳","自贡","攀枝花","泸州","德阳","广元","遂宁","内江","乐山","资阳","宜宾","南充","达州","雅安","广安","巴中","眉山","阿坝","甘孜","凉山"], dataFile: "data/sichuan-zhongkao.json" },
+        "北京": { cities: ["北京"], dataFile: "data/zhongkao-beijing.json" },
+        "上海": { cities: ["上海"], dataFile: "data/zhongkao-shanghai.json" },
+        "重庆": { cities: ["重庆"], dataFile: "data/zhongkao-chongqing.json" },
+        "广东": { cities: ["广州","深圳","佛山","东莞","珠海","中山","惠州","汕头","湛江"], dataFile: "data/zhongkao-guangdong.json" },
+        "江苏": { cities: ["南京","苏州","无锡","常州","南通","徐州","扬州","泰州","盐城","淮安","连云港","宿迁","镇江"], dataFile: "data/zhongkao-jiangsu.json" },
+        "浙江": { cities: ["杭州","宁波","温州","绍兴","嘉兴","金华","台州","湖州","丽水","衢州","舟山"], dataFile: "data/zhongkao-zhejiang.json" },
+        "山东": { cities: ["济南","青岛","烟台","潍坊","淄博","威海","日照","临沂","德州","聊城","滨州","菏泽","泰安","枣庄","济宁","东营"], dataFile: "data/zhongkao-shandong.json" },
+        "河南": { cities: ["郑州","洛阳","开封","新乡","安阳","许昌","平顶山","焦作","商丘","信阳","周口","驻马店","南阳","濮阳","三门峡","漯河","鹤壁"], dataFile: "data/zhongkao-henan.json" },
+        "湖北": { cities: ["武汉","襄阳","宜昌","荆州","黄冈","十堰","孝感","荆门","鄂州","黄石","咸宁","随州","恩施"], dataFile: "data/zhongkao-hubei.json" },
+        "湖南": { cities: ["长沙","株洲","湘潭","衡阳","岳阳","常德","郴州","邵阳","益阳","永州","怀化","娄底","湘西"], dataFile: "data/zhongkao-hunan.json" },
+        "福建": { cities: ["福州","厦门","泉州","漳州","莆田","龙岩","三明","南平","宁德"], dataFile: "data/zhongkao-fujian.json" },
+        "安徽": { cities: ["合肥","芜湖","蚌埠","淮南","马鞍山","淮北","铜陵","安庆","黄山","滁州","阜阳","宿州","六安","亳州","池州","宣城"], dataFile: "data/zhongkao-anhui.json" },
+        "江西": { cities: ["南昌","赣州","九江","上饶","抚州","宜春","吉安","景德镇","萍乡","新余","鹰潭"], dataFile: "data/zhongkao-jiangxi.json" },
+        "河北": { cities: ["石家庄","唐山","保定","邯郸","张家口","承德","廊坊","沧州","衡水","邢台","秦皇岛","定州","辛集"], dataFile: "data/zhongkao-hebei.json" },
+        "山西": { cities: ["太原","大同","阳泉","长治","晋城","朔州","晋中","运城","忻州","临汾","吕梁"], dataFile: "data/zhongkao-shanxi.json" },
+        "陕西": { cities: ["西安","宝鸡","咸阳","渭南","延安","汉中","榆林","安康","商洛","铜川"], dataFile: "data/zhongkao-shaanxi.json" },
+        "云南": { cities: ["昆明","曲靖","玉溪","保山","昭通","丽江","普洱","临沧","楚雄","红河","文山","西双版纳","大理","德宏","怒江","迪庆"], dataFile: "data/zhongkao-yunnan.json" },
+        "贵州": { cities: ["贵阳","遵义","六盘水","安顺","毕节","铜仁","黔东南","黔南","黔西南"], dataFile: "data/zhongkao-guizhou.json" },
+        "广西": { cities: ["南宁","柳州","桂林","梧州","北海","防城港","钦州","贵港","玉林","百色","贺州","河池","来宾","崇左"], dataFile: "data/zhongkao-guangxi.json" },
+        "辽宁": { cities: ["沈阳","大连","鞍山","抚顺","本溪","丹东","锦州","营口","阜新","辽阳","盘锦","铁岭","朝阳","葫芦岛"], dataFile: "data/zhongkao-liaoning.json" },
+        "吉林": { cities: ["长春","吉林","四平","辽源","通化","白山","松原","白城","延边"], dataFile: "data/zhongkao-jilin.json" },
+        "黑龙江": { cities: ["哈尔滨","齐齐哈尔","鸡西","鹤岗","双鸭山","大庆","伊春","佳木斯","七台河","牡丹江","黑河","绥化","大兴安岭"], dataFile: "data/zhongkao-heilongjiang.json" },
+        "天津": { cities: ["天津"], dataFile: "data/zhongkao-tianjin.json" },
+        "海南": { cities: ["海口","三亚","三沙","儋州"], dataFile: "data/zhongkao-hainan.json" },
+        "甘肃": { cities: ["兰州","嘉峪关","金昌","白银","天水","武威","张掖","平凉","酒泉","庆阳","定西","陇南","临夏","甘南"], dataFile: "data/zhongkao-gansu.json" },
+        "青海": { cities: ["西宁","海东","海北","黄南","海南州","果洛","玉树","海西"], dataFile: "data/zhongkao-qinghai.json" },
+        "宁夏": { cities: ["银川","石嘴山","吴忠","固原","中卫"], dataFile: "data/zhongkao-ningxia.json" },
+        "新疆": { cities: ["乌鲁木齐","克拉玛依","吐鲁番","哈密","昌吉","博尔塔拉","巴音郭楞","阿克苏","克孜勒苏","喀什","和田","伊犁","塔城","阿勒泰"], dataFile: "data/zhongkao-xinjiang.json" },
+        "内蒙古": { cities: ["呼和浩特","包头","乌海","赤峰","通辽","鄂尔多斯","呼伦贝尔","巴彦淖尔","乌兰察布","兴安","锡林郭勒","阿拉善"], dataFile: "data/zhongkao-neimenggu.json" },
+        "西藏": { cities: ["拉萨","日喀则","昌都","林芝","山南","那曲","阿里"], dataFile: "data/zhongkao-xizang.json" }
+    }
 };
 
 // ---- 训练模式与目标 ----
 let currentTrainingMode = 'auto';
 let currentTrainingGoal = 'general';
+let currentExamProvince = '';
 let currentExamCity = '';
-let sichuanZhongkaoData = null;
+let zhongkaoDataCache = {}; // { province: data }
 
-// 加载四川中考数据
-async function loadSichuanZhongkaoData() {
-    if (sichuanZhongkaoData) return sichuanZhongkaoData;
+// 加载指定省份的中考体育数据
+async function loadZhongkaoData(province) {
+    if (zhongkaoDataCache[province]) return zhongkaoDataCache[province];
+    const provInfo = TRAINING_DB.nationalProvinces[province];
+    if (!provInfo) return null;
     try {
-        const resp = await fetch('data/sichuan-zhongkao.json');
-        sichuanZhongkaoData = await resp.json();
-        return sichuanZhongkaoData;
+        const resp = await fetch(provInfo.dataFile);
+        if (!resp.ok) { console.warn(`数据文件 ${provInfo.dataFile} 不存在`); return null; }
+        const data = await resp.json();
+        zhongkaoDataCache[province] = data;
+        return data;
     } catch(e) {
-        console.warn('Failed to load sichuan zhongkao data:', e);
+        console.warn('Failed to load zhongkao data for', province, e);
         return null;
     }
+}
+
+// 兼容旧引用
+async function loadSichuanZhongkaoData() {
+    return loadZhongkaoData('四川');
 }
 
 function onTrainingStudentChange() {
@@ -2533,49 +2850,106 @@ function switchTrainingMode(mode) {
 function onTrainingGoalChange() {
     currentTrainingGoal = document.getElementById('trainingGoalSelect').value;
     const cityRow = document.getElementById('examCityRow');
-    cityRow.style.display = currentTrainingGoal === 'exam_prep' ? 'flex' : 'none';
+    if (!cityRow) { generateTrainingPlan(); return; }
+    if (currentTrainingGoal === 'exam_prep') {
+        cityRow.style.display = 'flex';
+        renderCitySelector();
+    } else {
+        cityRow.style.display = 'none';
+    }
     generateTrainingPlan();
 }
 
-function onExamCityChange() {
-    currentExamCity = document.getElementById('examCitySelect').value;
+async function onExamProvinceChange() {
+    currentExamProvince = document.getElementById('examProvinceSelect').value;
+    currentExamCity = '';
+    const citySelect = document.getElementById('examCitySelect');
+    if (currentExamProvince) {
+        const provInfo = TRAINING_DB.nationalProvinces[currentExamProvince];
+        if (provInfo) {
+            citySelect.innerHTML = '<option value="">-- 选择城市 --</option>' +
+                provInfo.cities.map(c => `<option value="${c}">${c}</option>`).join('');
+        }
+        // 预加载该省份数据
+        await loadZhongkaoData(currentExamProvince);
+    } else {
+        citySelect.innerHTML = '<option value="">-- 选择城市 --</option>';
+    }
     renderExamInfo();
     generateTrainingPlan();
 }
 
+async function onExamCityChange() {
+    currentExamCity = document.getElementById('examCitySelect').value;
+    await renderExamInfo();
+    generateTrainingPlan();
+}
+
 function renderCitySelector() {
-    const select = document.getElementById('examCitySelect');
-    if (!select.options.length || select.options.length === 1) {
-        select.innerHTML = '<option value="">-- 请选择城市 --</option>' +
-            TRAINING_DB.sichuanCities.map(c => `<option value="${c}">${c}</option>`).join('');
+    const provSelect = document.getElementById('examProvinceSelect');
+    const citySelect = document.getElementById('examCitySelect');
+    // 填充省份（只填一次）
+    if (provSelect && (!provSelect.options.length || provSelect.options.length === 1)) {
+        const provinces = Object.keys(TRAINING_DB.nationalProvinces);
+        // 四川排第一
+        const ordered = ['四川'].concat(provinces.filter(p => p !== '四川'));
+        provSelect.innerHTML = '<option value="">-- 选择省份 --</option>' +
+            ordered.map(p => `<option value="${p}">${p}</option>`).join('');
+    }
+    if (citySelect && (!citySelect.options.length || citySelect.options.length === 1)) {
+        citySelect.innerHTML = '<option value="">-- 选择城市 --</option>';
     }
 }
 
-function renderExamInfo() {
+async function renderExamInfo() {
     const infoDiv = document.getElementById('examInfoBox');
-    if (!currentExamCity || !sichuanZhongkaoData || !sichuanZhongkaoData.cities[currentExamCity]) {
+    if (!currentExamProvince || !currentExamCity) {
         infoDiv.innerHTML = '';
         return;
     }
-    const city = sichuanZhongkaoData.cities[currentExamCity];
+    // 加载省份数据（异步）
+    const data = await loadZhongkaoData(currentExamProvince);
+    if (!data || !data.cities || !data.cities[currentExamCity]) {
+        infoDiv.innerHTML = `<div class="exam-info-card"><p style="color:var(--text-light);font-size:13px;">暂无${currentExamProvince}${currentExamCity}的详细评分标准，请参考通用训练方案。</p></div>`;
+        return;
+    }
+    const city = data.cities[currentExamCity];
+    const commonProjects = data.commonProjects || {};
+    const isMale = true; // 默认显示男生标准，后续可根据学生性别切换
+    const fullScore = isMale ? (city.fullScore_male || {}) : (city.fullScore_female || {});
+    const passScore = isMale ? (city.passScore_male || {}) : (city.passScore_female || {});
+    
     let html = `<div class="exam-info-card">
-        <h5>📋 ${currentExamCity}市中考体育方案（总分${city.totalScore}分）</h5>
+        <h5>📋 ${currentExamProvince} · ${currentExamCity}中考体育方案（总分${city.totalScore}分）</h5>
         <p class="exam-structure">${city.structure}</p>
         <div class="exam-projects">`;
     city.projects.forEach(p => {
         const typeLabel = p.type;
         let itemsLabel = '';
-        if (p.items) itemsLabel = p.items.map(id => sichuanZhongkaoData.commonProjects[id]?.name || id).join(' / ');
+        if (p.items) itemsLabel = p.items.map(id => commonProjects[id]?.name || id).join(' / ');
         if (p.items_male && p.items_female) {
-            itemsLabel = `男：${p.items_male.map(id => sichuanZhongkaoData.commonProjects[id]?.name || id).join(' / ')}<br>女：${p.items_female.map(id => sichuanZhongkaoData.commonProjects[id]?.name || id).join(' / ')}`;
+            itemsLabel = `男：${p.items_male.map(id => commonProjects[id]?.name || id).join(' / ')}<br>女：${p.items_female.map(id => commonProjects[id]?.name || id).join(' / ')}`;
         } else if (p.items_male) {
-            itemsLabel = `男：${p.items_male.map(id => sichuanZhongkaoData.commonProjects[id]?.name || id).join(' / ')}`;
+            itemsLabel = `男：${p.items_male.map(id => commonProjects[id]?.name || id).join(' / ')}`;
         } else if (p.items_female) {
-            itemsLabel = `女：${p.items_female.map(id => sichuanZhongkaoData.commonProjects[id]?.name || id).join(' / ')}`;
+            itemsLabel = `女：${p.items_female.map(id => commonProjects[id]?.name || id).join(' / ')}`;
         }
         html += `<div class="exam-project-row"><span class="exam-type">${typeLabel}</span><span class="exam-items">${itemsLabel}</span><span class="exam-score">${p.scorePerItem || ''}</span></div>`;
     });
     html += `</div>`;
+    
+    // 展示满分标准和及格线
+    const allKeys = [...new Set([...Object.keys(fullScore), ...Object.keys(passScore)])];
+    if (allKeys.length > 0) {
+        html += `<div class="exam-score-table"><h6>评分标准（男）</h6><table class="score-standard-table"><thead><tr><th>项目</th><th>满分</th><th>及格</th></tr></thead><tbody>`;
+        allKeys.forEach(key => {
+            const name = commonProjects[key]?.name || key;
+            const fs = fullScore[key] || '—';
+            const ps = passScore[key] || '—';
+            html += `<tr><td>${name}</td><td class="score-full">${fs}</td><td class="score-pass">${ps}</td></tr>`;
+        });
+        html += `</tbody></table></div>`;
+    }
     if (city.notes) html += `<p class="exam-note">📝 ${city.notes}</p>`;
     html += `</div>`;
     infoDiv.innerHTML = html;
@@ -2624,9 +2998,9 @@ function generateTrainingPlan() {
     // 获取训练目标
     currentTrainingGoal = document.getElementById('trainingGoalSelect') ? document.getElementById('trainingGoalSelect').value : 'general';
 
-    // 中考专项模式需要选择城市
-    if (currentTrainingGoal === 'exam_prep' && !currentExamCity) {
-        content.innerHTML = '<div class="empty-state"><p>请先选择中考所在城市</p></div>';
+    // 中考专项模式需要选择省份和城市
+    if (currentTrainingGoal === 'exam_prep' && (!currentExamProvince || !currentExamCity)) {
+        content.innerHTML = '<div class="empty-state"><p>请先选择中考所在省份和城市</p></div>';
         document.getElementById('trainingActions').style.display = 'none';
         return;
     }
@@ -2634,6 +3008,7 @@ function generateTrainingPlan() {
     // 获取薄弱素质
     let targetQualities = [];
     let weakItemsHTML = '';
+    let gapAnalysisHTML = '';
     let goalLabel = TRAINING_DB.trainingGoals.find(g => g.value === currentTrainingGoal)?.label || '常规体能提升';
 
     if (currentTrainingMode === 'auto') {
@@ -2646,6 +3021,17 @@ function generateTrainingPlan() {
         const weakResult = analyzeWeakQualities(lastTest, student.grade);
         targetQualities = weakResult.qualities;
         weakItemsHTML = weakResult.html;
+        // 中考专项模式：生成差距分析
+        if (currentTrainingGoal === 'exam_prep' && currentExamProvince && currentExamCity) {
+            const gapResult = generateGapAnalysis(lastTest, student);
+            if (gapResult) {
+                gapAnalysisHTML = gapResult.html;
+                // 用差距分析结果优化训练优先级
+                if (gapResult.priorities && gapResult.priorities.length > 0) {
+                    targetQualities = gapResult.priorities.concat(targetQualities.filter(q => !gapResult.priorities.includes(q)));
+                }
+            }
+        }
     } else {
         const checkboxes = document.querySelectorAll('#weaknessCheckboxGrid input:checked');
         targetQualities = Array.from(checkboxes).map(cb => cb.value);
@@ -2663,8 +3049,76 @@ function generateTrainingPlan() {
     const plan = buildOneHourPlan(targetQualities, grade, ageGroup, currentTrainingGoal, currentExamCity, student);
 
     // 渲染方案
-    content.innerHTML = renderTrainingPlan(plan, student, sp, weakItemsHTML, targetQualities, currentTrainingGoal, goalLabel);
+    content.innerHTML = renderTrainingPlan(plan, student, sp, weakItemsHTML, targetQualities, currentTrainingGoal, goalLabel, gapAnalysisHTML);
     document.getElementById('trainingActions').style.display = 'block';
+}
+
+// 智能差距分析：对比学生体测成绩与中考满分标准
+function generateGapAnalysis(lastTest, student) {
+    const data = zhongkaoDataCache[currentExamProvince];
+    if (!data || !data.cities || !data.cities[currentExamCity]) return null;
+    const city = data.cities[currentExamCity];
+    const commonProjects = data.commonProjects || {};
+    const isMale = student.gender !== '女';
+    const fullScore = isMale ? (city.fullScore_male || {}) : (city.fullScore_female || {});
+    const passScore = isMale ? (city.passScore_male || {}) : (city.passScore_female || {});
+    
+    const itemScores = lastTest.itemScores || {};
+    const gaps = [];
+    
+    // 遍历中考考试项目，计算学生成绩与满分的差距
+    Object.keys(fullScore).forEach(key => {
+        const itemName = commonProjects[key]?.name || key;
+        const fsStr = fullScore[key] || '';
+        const psStr = passScore[key] || '';
+        const studentScore = itemScores[key]; // 0-100 分
+        
+        if (studentScore !== undefined && studentScore !== null && studentScore > 0) {
+            const gap = 100 - studentScore; // 差距分数
+            const status = studentScore >= 90 ? 'full' : studentScore >= 60 ? 'pass' : 'fail';
+            gaps.push({ key, itemName, fsStr, psStr, studentScore, gap, status });
+        } else {
+            // 未测试的项目也展示
+            gaps.push({ key, itemName, fsStr, psStr, studentScore: null, gap: 100, status: 'untested' });
+        }
+    });
+    
+    // 按差距从大到小排序
+    gaps.sort((a, b) => b.gap - a.gap);
+    
+    // 生成优先训练的素质
+    const priorities = [];
+    gaps.slice(0, 3).forEach(g => {
+        if (g.status === 'fail' || g.status === 'untested') {
+            const mapping = ITEM_QUALITY_MAP[g.key];
+            if (mapping) {
+                [mapping.quality, mapping.sub].filter(Boolean).forEach(q => {
+                    if (!priorities.includes(q)) priorities.push(q);
+                });
+            }
+        }
+    });
+    
+    // 生成 HTML
+    const html = `
+    <div class="gap-analysis-box">
+        <h4>🎯 中考差距分析（${currentExamCity}）</h4>
+        <table class="gap-table">
+            <thead><tr><th>考试项目</th><th>满分标准</th><th>及格标准</th><th>当前得分</th><th>差距</th><th>状态</th></tr></thead>
+            <tbody>
+                ${gaps.map(g => {
+                    const statusClass = g.status === 'full' ? 'gap-full' : g.status === 'pass' ? 'gap-pass' : g.status === 'fail' ? 'gap-fail' : 'gap-untested';
+                    const statusText = g.status === 'full' ? '✅ 达满分' : g.status === 'pass' ? '✓ 及格' : g.status === 'fail' ? '⚠️ 未及格' : '❓ 未测试';
+                    const scoreText = g.studentScore !== null ? g.studentScore + '分' : '—';
+                    const gapText = g.studentScore !== null ? '-' + g.gap + '分' : '—';
+                    return `<tr class="${statusClass}"><td>${g.itemName}</td><td class="score-full">${g.fsStr}</td><td class="score-pass">${g.psStr}</td><td>${scoreText}</td><td>${gapText}</td><td>${statusText}</td></tr>`;
+                }).join('')}
+            </tbody>
+        </table>
+        ${priorities.length > 0 ? `<p class="gap-priority">🔥 优先训练：<strong>${priorities.join('、')}</strong></p>` : ''}
+    </div>`;
+    
+    return { html, priorities, gaps };
 }
 
 function getSensitivePeriodKey(grade) {
@@ -2843,7 +3297,7 @@ function pickExercises(pool, count, grade) {
     return result;
 }
 
-function renderTrainingPlan(plan, student, sp, weakItemsHTML, targetQualities, goal, goalLabel) {
+function renderTrainingPlan(plan, student, sp, weakItemsHTML, targetQualities, goal, goalLabel, gapAnalysisHTML) {
     const studentName = student.name;
     const gradeText = getGradeText(student.grade);
     const gender = student.gender;
@@ -2872,10 +3326,11 @@ function renderTrainingPlan(plan, student, sp, weakItemsHTML, targetQualities, g
     </div>`;
 
     // 中考城市信息
-    const examInfoHTML = (goal === 'exam_prep' && currentExamCity && sichuanZhongkaoData?.cities[currentExamCity]) ? `
+    const examData = zhongkaoDataCache[currentExamProvince];
+    const examInfoHTML = (goal === 'exam_prep' && currentExamCity && examData?.cities?.[currentExamCity]) ? `
         <div class="exam-plan-header">
-            <h4>🎯 ${currentExamCity}市中考体育专项训练</h4>
-            <p>总分${sichuanZhongkaoData.cities[currentExamCity].totalScore}分 · ${sichuanZhongkaoData.cities[currentExamCity].structure}</p>
+            <h4>🎯 ${currentExamProvince} · ${currentExamCity}中考体育专项训练</h4>
+            <p>总分${examData.cities[currentExamCity].totalScore}分 · ${examData.cities[currentExamCity].structure}</p>
         </div>` : '';
 
     // 训练目标说明
@@ -2892,6 +3347,7 @@ function renderTrainingPlan(plan, student, sp, weakItemsHTML, targetQualities, g
 
         ${goalInfoHTML}
         ${examInfoHTML}
+        ${gapAnalysisHTML || ''}
 
         <div class="weakness-analysis">
             <h4>🔍 薄弱项分析</h4>
@@ -3425,30 +3881,31 @@ function extractPhysicalTestData(data, grade, gender, lineConfidenceArr = null) 
     // 将二维数组转为一维文本，便于关键词匹配
     const lines = rawData.map(row => Array.isArray(row) ? row.join(' ') : String(row));
     
-    // 体测项目关键词映射
+    // 体测项目关键词映射 — 含 OCR 容错变体
     const itemPatterns = {
         'height': { keys: ['身高', '身长', 'height'], unit: 'cm' },
         'weight': { keys: ['体重', 'weight'], unit: 'kg' },
-        'run_50m': { keys: ['50米跑', '50m'], unit: '秒' },  // 移除'50米'，避免误匹配'50米×8'
+        'run_50m': { keys: ['50米跑', '50m', '50M', '5Om'], unit: '秒' },  // 移除'50米'，避免误匹配'50米×8'
         'sit_and_reach': { keys: ['坐位体前屈', '体前屈', '前屈'], unit: 'cm' },
         'jump_rope_1min': { keys: ['1分钟跳绳', '一分钟跳绳', '跳绳'], unit: '次' },
         'sit_up_1min': { keys: ['1分钟仰卧起坐', '一分钟仰卧起坐', '仰卧起坐'], unit: '次' },
         'pull_up': { keys: ['引体向上', '引体'], unit: '次' },
         'run_50m_8': { keys: ['50米×8往返跑', '50米×8', '50×8', '往返跑'], unit: "分'秒" },
-        'run_800m': { keys: ['800米跑', '800米', '800m'], unit: "分'秒" },
-        'run_1000m': { keys: ['1000米跑', '1000米', '1000m'], unit: "分'秒" },
+        'run_800m': { keys: ['800米跑', '800米', '800m', '800M', '8OO米'], unit: "分'秒" },
+        'run_1000m': { keys: ['1000米跑', '1000米', '1000m', '1000M', 'l000米', 'I000米', '1OOO米'], unit: "分'秒" },
         'standing_long_jump': { keys: ['立定跳远', '跳远'], unit: 'cm' },
         'balance_stand': { keys: ['平衡能力', '闭眼单腿站立', '闭眼单脚站立', '单脚闭眼', '单脚站立'], unit: '秒' },
         't_test': { keys: ['T型跑', 'T形跑', 'T跑', '灵敏性', '灵敏'], unit: '秒' }
     };
     
     // 单位到正则的映射（用于"数字+单位"优先匹配）
+    // 时间正则支持：3'25" / 3′25″ / 3分25秒 / 3:25 / 3：25
     const unitPatterns = {
         '次': /(\d+\.?\d*)\s*次/,
         '秒': /(\d+\.?\d*)\s*秒/,
         'cm': /(\d+\.?\d*)\s*cm/,
         'kg': /(\d+\.?\d*)\s*kg/,
-        '分': /(\d+)\s*['′分]\s*(\d+)\s*秒?/
+        '分': /(\d+)\s*['′分:：]\s*(\d{1,2})\s*["″秒]?/
     };
     
     // 项目单位 -> 单位模式映射
@@ -3459,12 +3916,13 @@ function extractPhysicalTestData(data, grade, gender, lineConfidenceArr = null) 
     
     // 从每一行/列提取数据
     for (let lineIdx = 0; lineIdx < lines.length; lineIdx++) {
-        const lineText = lines[lineIdx].trim();
+        // 归一化：去除数字与单位间的空格（OCR 常见问题），如 "1000 米" → "1000米"
+        const lineText = lines[lineIdx].trim().replace(/(\d)\s+(米|m|M|秒|次|cm|kg)/gi, '$1$2');
         if (!lineText) continue;
         
         for (const [key, config] of Object.entries(itemPatterns)) {
-            // 只处理该年级适用的项目
-            if (!applicableKeys.includes(key)) continue;
+            // 不再按 applicableKeys 过滤 — 提取所有能识别的项目，显示时再过滤
+            // 这样即使学生是女生或小学，文件中有1000米跑也能提取出来
             // 已找到则跳过（首次匹配优先）
             if (items[key] !== undefined) continue;
             
@@ -3500,19 +3958,34 @@ function extractPhysicalTestData(data, grade, gender, lineConfidenceArr = null) 
                 }
             }
             
-            // 策略2：如果没找到带单位的数字，清理干扰文本后匹配普通数字
+            // 策略2：如果没找到带单位的数字，尝试更多匹配方式
             if (value === null) {
-                // 移除干扰部分：如 "小学1-6年级"、"全学段" 等
-                const cleaned = afterKeyword
-                    .replace(/小学\d+-\d+年级[\/\w\s]*/, '')
-                    .replace(/全学段/, '')
-                    .replace(/初中[男女]生/, '')
-                    .replace(/高中[男女]生/, '')
-                    .replace(/[男女]生/, '');
+                // 策略2a：对于时间类型项目（分'秒），尝试匹配 X:XX / X.XX 格式
+                if (config.unit === "分'秒" || config.unit === '分秒') {
+                    const timeMatch = afterKeyword.match(/(\d+)\s*[:：.]\s*(\d{1,2})/);
+                    if (timeMatch) {
+                        const mins = parseInt(timeMatch[1]);
+                        const secs = parseInt(timeMatch[2]);
+                        // 合理的时间范围：1-10分钟，秒数 0-59
+                        if (secs < 60 && mins >= 1 && mins <= 10) {
+                            value = `${mins}'${secs}"`;
+                        }
+                    }
+                }
                 
-                const numMatch = cleaned.match(/(\d+\.?\d*)/);
-                if (numMatch) {
-                    value = parseFloat(numMatch[1]);
+                // 策略2b：清理干扰文本后匹配普通数字（仅非时间类型）
+                if (value === null && config.unit !== "分'秒" && config.unit !== '分秒') {
+                    const cleaned = afterKeyword
+                        .replace(/小学\d+-\d+年级[\/\w\s]*/, '')
+                        .replace(/全学段/, '')
+                        .replace(/初中[男女]生/, '')
+                        .replace(/高中[男女]生/, '')
+                        .replace(/[男女]生/, '');
+                    
+                    const numMatch = cleaned.match(/(\d+\.?\d*)/);
+                    if (numMatch) {
+                        value = parseFloat(numMatch[1]);
+                    }
                 }
             }
             
@@ -3606,7 +4079,7 @@ function showUploadSuccess(result) {
                     return `
                     <tr class="${confClass}">
                         <td>${getItemName(key)}</td>
-                        <td><input type="text" id="extract_${key}" value="${result.items[key]}" class="extract-input ${inputClass}"></td>
+                        <td><input type="text" id="extract_${key}" value="${String(result.items[key]).replace(/"/g, '&quot;')}" class="extract-input ${inputClass}"></td>
                         <td>${getItemUnit(key)}</td>
                         ${hasConfidence ? `<td class="conf-cell">${confText}</td>` : ''}
                     </tr>`;

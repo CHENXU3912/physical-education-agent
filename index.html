@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>上门体育智能体</title>
-    <link rel="stylesheet" href="styles.css?v=20260708c">
+    <link rel="stylesheet" href="styles.css?v=20260709b">
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <!-- 文档解析依赖库 -->
@@ -131,6 +131,22 @@
                         <p style="font-size:13px;color:var(--text-light);margin-bottom:16px">
                             支持 Excel、PDF、图片文件。自动识别体测数据，无需手动输入。
                         </p>
+                        <!-- 省份/城市选择器 -->
+                        <div style="display:flex;gap:12px;margin-bottom:12px;flex-wrap:wrap">
+                            <div style="flex:1;min-width:140px">
+                                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px">省份</label>
+                                <select id="uploadProvinceSelect" onchange="onUploadProvinceChange()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg-primary);color:var(--text-primary)">
+                                    <option value="">-- 选择省份 --</option>
+                                </select>
+                            </div>
+                            <div style="flex:1;min-width:140px">
+                                <label style="font-size:13px;color:var(--text-secondary);display:block;margin-bottom:4px">城市</label>
+                                <select id="uploadCitySelect" onchange="onUploadCityChange()" style="width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:14px;background:var(--bg-primary);color:var(--text-primary)">
+                                    <option value="">-- 选择城市 --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div id="uploadExamInfo" style="margin-bottom:12px"></div>
                         <div class="upload-tabs">
                             <button type="button" class="upload-tab active" data-type="excel" onclick="switchUploadTab('excel')">📊 Excel</button>
                             <button type="button" class="upload-tab" data-type="pdf" onclick="switchUploadTab('pdf')">📄 PDF</button>
@@ -279,6 +295,25 @@
                             <option value="">-- 请选择学生 --</option>
                         </select>
                     </div>
+
+                    <div class="form-section">
+                        <h3>中考体育标准（可选）</h3>
+                        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                            <div style="flex:1;min-width:120px;">
+                                <label style="font-size:13px;color:var(--text-light);">省份</label>
+                                <select id="reportProvinceSelect" onchange="onReportProvinceChange()">
+                                    <option value="">-- 选择省份 --</option>
+                                </select>
+                            </div>
+                            <div style="flex:1;min-width:120px;">
+                                <label style="font-size:13px;color:var(--text-light);">城市</label>
+                                <select id="reportCitySelect" onchange="onReportCityChange()">
+                                    <option value="">-- 选择城市 --</option>
+                                </select>
+                            </div>
+                        </div>
+                        <p style="font-size:12px;color:var(--text-light);margin-top:6px;">选择后，导出的 PDF 报告将标注该地区中考体育满分/及格标准</p>
+                    </div>
                     
                     <!-- 对比模式选择区 -->
                     <div class="form-section" id="compareSection" style="display:none;">
@@ -359,12 +394,20 @@
                             <option value="exam_prep">中考体育专项训练</option>
                         </select>
 
-                        <div class="form-row" id="examCityRow" style="display:none; margin-bottom:12px;">
-                            <div class="form-group" style="flex:1;">
-                                <label style="font-size:13px; color:var(--text-light);">选择中考所在城市</label>
-                                <select id="examCitySelect" onchange="onExamCityChange()">
-                                    <option value="">-- 请选择城市 --</option>
-                                </select>
+                        <div class="form-row" id="examCityRow" style="display:none; margin-bottom:12px; flex-direction:column; gap:8px;">
+                            <div class="form-group" style="flex:1; display:flex; gap:8px; align-items:flex-end;">
+                                <div style="flex:1;">
+                                    <label style="font-size:13px; color:var(--text-light);">省份</label>
+                                    <select id="examProvinceSelect" onchange="onExamProvinceChange()" style="margin-bottom:0;">
+                                        <option value="">-- 选择省份 --</option>
+                                    </select>
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="font-size:13px; color:var(--text-light);">城市</label>
+                                    <select id="examCitySelect" onchange="onExamCityChange()" style="margin-bottom:0;">
+                                        <option value="">-- 选择城市 --</option>
+                                    </select>
+                                </div>
                             </div>
                         </div>
 
@@ -756,8 +799,8 @@
         }
     </script>
     <!-- db.js + app.js（外部引用，带版本号） -->
-    <script src="js/db.js?v=20260708c"></script>
+    <script src="js/db.js?v=20260709b"></script>
     <!-- 应用主逻辑 -->
-    <script src="app.js?v=20260708c"></script>
+    <script src="app.js?v=20260709b"></script>
 </body>
 </html>

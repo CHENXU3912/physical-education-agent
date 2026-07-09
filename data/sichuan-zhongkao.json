@@ -1,8 +1,8 @@
 {
-  "description": "四川省各市州中考体育考试项目数据库（2026年最新）",
-  "source": "各市教育局官网、新闻报道、教育部门公开文件",
-  "lastUpdated": "2026-07-03",
-  "note": "评分标准以各市教育部门公布的最新文件为准，本数据库仅供训练方案参考",
+  "description": "全国各省市中考体育考试项目数据库（2026年最新）",
+  "source": "各省市教育局官网、新闻报道、教育部门公开文件",
+  "lastUpdated": "2026-07-08",
+  "note": "评分标准以各省市教育部门公布的最新文件为准，本数据库仅供训练方案参考。四川省各市评分标准参考四川省教育厅2026年统一评分细则，部分市州可能有微调。",
   "commonProjects": {
     "run_1000m": { "name": "1000米跑（男）", "unit": "分'秒", "category": "耐力" },
     "run_800m": { "name": "800米跑（女）", "unit": "分'秒", "category": "耐力" },
@@ -52,6 +52,8 @@
       ],
       "fullScore_male": { "run_1000m": "3'30\"", "standing_long_jump": "245cm", "pull_up": "13次", "jump_rope_1min": "180次", "run_50m": "7.0秒" },
       "fullScore_female": { "run_800m": "3'24\"", "standing_long_jump": "202cm", "solid_ball": "7.8米", "jump_rope_1min": "180次", "run_50m": "7.8秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次", "jump_rope_1min": "80次", "run_50m": "9.5秒" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "solid_ball": "5.9米", "jump_rope_1min": "80次", "run_50m": "10.5秒" },
       "notes": "竞赛获奖可免考：全国前16/省级前8/市级前6名→选考满分；全国前8/省级前3/市级第1名→必考+选考满分"
     },
     "自贡": {
@@ -63,6 +65,10 @@
         { "type": "必考", "items_male": ["pull_up"], "items_female": ["sit_up_1min"], "scorePerItem": "15分" },
         { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump"], "scorePerItem": "10分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "pull_up": "15次", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_up_1min": "52次", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_up_1min": "24次" },
       "notes": "具体分值以自贡市教体局最新公布为准"
     },
     "攀枝花": {
@@ -74,6 +80,10 @@
         { "type": "必考", "items_male": ["pull_up"], "items_female": ["sit_up_1min"], "scorePerItem": "10分" },
         { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump", "sit_and_reach"], "scorePerItem": "15分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "pull_up": "15次", "sit_and_reach": "25cm", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_up_1min": "52次", "sit_and_reach": "25cm", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次", "sit_and_reach": "10cm" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_up_1min": "24次", "sit_and_reach": "10cm" },
       "notes": "具体分值以攀枝花市教体局最新公布为准"
     },
     "泸州": {
@@ -85,6 +95,10 @@
         { "type": "选考(三选一)", "items": ["basketball_dribble", "football_dribble", "volleyball_bump"], "scorePerItem": "15分" },
         { "type": "抽考(2026年确定)", "items": ["sit_and_reach"], "scorePerItem": "20分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "jump_rope_1min": "180次", "sit_and_reach": "25cm", "basketball_dribble": "20秒", "football_dribble": "7.5秒", "volleyball_bump": "40秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "jump_rope_1min": "180次", "sit_and_reach": "25cm", "basketball_dribble": "26秒", "football_dribble": "8.1秒", "volleyball_bump": "40秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "jump_rope_1min": "80次", "sit_and_reach": "10cm" },
+      "passScore_female": { "run_800m": "4'45\"", "jump_rope_1min": "80次", "sit_and_reach": "10cm" },
       "notes": "抽考项目由市教体局每年抽定，2026年为坐位体前屈；免考学生体考总分按35分计算"
     },
     "德阳": {
@@ -94,9 +108,13 @@
         { "type": "必考1", "items": ["standing_long_jump"], "scorePerItem": "按市标准" },
         { "type": "必考2", "items_male": ["run_1000m"], "items_female": ["run_800m"], "scorePerItem": "按市标准" },
         { "type": "选考X1(二选一)", "items_male": ["pull_up", "solid_ball"], "items_female": ["sit_up_1min", "solid_ball"], "scorePerItem": "按市标准" },
-        { "type": "选考X2(三选一)", "items": ["football_dribble", "volleyball_bump", "basketball_dribble"], "scorePerItem": "按市标准" }
+        { "type": "选考X2(三选一)", "items": ["football_dribble", "volleyball_bump", "basketball_dribble"], "scorePerItem": "15分" }
       ],
-      "notes": "具体分值以德阳市教体局最新公布为准"
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "pull_up": "15次", "solid_ball": "12.4米", "football_dribble": "7.5秒", "volleyball_bump": "40秒", "basketball_dribble": "20秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_up_1min": "52次", "solid_ball": "7.8米", "football_dribble": "8.1秒", "volleyball_bump": "40秒", "basketball_dribble": "26秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次", "solid_ball": "7.7米" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_up_1min": "24次", "solid_ball": "5.9米" },
+      "notes": "2+X1+X2模式：必考1立定跳远15分+必考2长跑20分+选考X1力量15分+选考X2球类10分，具体分值以德阳市教体局最新公布为准"
     },
     "广元": {
       "totalScore": 60,
@@ -107,6 +125,10 @@
         { "type": "必考", "items_male": ["pull_up"], "items_female": ["sit_up_1min"], "scorePerItem": "10分" },
         { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump", "jump_rope_1min"], "scorePerItem": "15分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "pull_up": "15次", "jump_rope_1min": "180次", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_up_1min": "52次", "jump_rope_1min": "180次", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次", "jump_rope_1min": "80次" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_up_1min": "24次", "jump_rope_1min": "80次" },
       "notes": "具体分值以广元市教育局最新公布为准"
     },
     "遂宁": {
@@ -116,9 +138,13 @@
         { "type": "必考", "items_male": ["run_1000m"], "items_female": ["run_800m"], "scorePerItem": "按市标准" },
         { "type": "必考", "items": ["standing_long_jump"], "scorePerItem": "按市标准" },
         { "type": "必考", "items": ["jump_rope_1min"], "scorePerItem": "按市标准" },
-        { "type": "必考", "items_male": ["pull_up"], "items_female": ["sit_up_1min"], "scorePerItem": "按市标准" },
-        { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump"], "scorePerItem": "按市标准" }
+        { "type": "必考", "items_male": ["pull_up"], "items_female": ["sit_up_1min"], "scorePerItem": "18分" },
+        { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump"], "scorePerItem": "10分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "jump_rope_1min": "180次", "pull_up": "15次", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "jump_rope_1min": "180次", "sit_up_1min": "52次", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "jump_rope_1min": "80次", "pull_up": "5次" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "jump_rope_1min": "80次", "sit_up_1min": "24次" },
       "notes": "四个必考项目+一个选考项目，具体分值以遂宁市教体局最新公布为准"
     },
     "内江": {
@@ -130,6 +156,10 @@
         { "type": "必考", "items_male": ["pull_up"], "items_female": ["sit_up_1min"], "scorePerItem": "10分" },
         { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump", "sit_and_reach"], "scorePerItem": "15分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "pull_up": "15次", "sit_and_reach": "25cm", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_up_1min": "52次", "sit_and_reach": "25cm", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次", "sit_and_reach": "10cm" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_up_1min": "24次", "sit_and_reach": "10cm" },
       "notes": "具体分值以内江市教体局最新公布为准"
     },
     "乐山": {
@@ -141,6 +171,10 @@
         { "type": "必考", "items": ["standing_long_jump"], "scorePerItem": "15分" },
         { "type": "选考(4选2)", "items": ["football_dribble", "basketball_dribble", "sit_and_reach", "solid_ball"], "scorePerItem": "10分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "pull_up": "15次", "sit_and_reach": "25cm", "solid_ball": "12.4米", "football_dribble": "7.5秒", "basketball_dribble": "20秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_up_1min": "52次", "sit_and_reach": "25cm", "solid_ball": "7.8米", "football_dribble": "8.1秒", "basketball_dribble": "26秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次", "sit_and_reach": "10cm", "solid_ball": "7.7米" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_up_1min": "24次", "sit_and_reach": "10cm", "solid_ball": "5.9米" },
       "notes": "足球/篮球绕杆运球每人2次取最好成绩；坐位体前屈每人2次取最大值；实心球投掷每人3次取最好成绩"
     },
     "资阳": {
@@ -152,6 +186,10 @@
         { "type": "必考", "items_male": ["pull_up"], "items_female": ["sit_up_1min"], "scorePerItem": "10分" },
         { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump", "jump_rope_1min"], "scorePerItem": "15分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "pull_up": "15次", "jump_rope_1min": "180次", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_up_1min": "52次", "jump_rope_1min": "180次", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次", "jump_rope_1min": "80次" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_up_1min": "24次", "jump_rope_1min": "80次" },
       "notes": "具体分值以资阳市教体局最新公布为准"
     },
     "宜宾": {
@@ -163,6 +201,10 @@
         { "type": "必测", "items": ["standing_long_jump"], "scorePerItem": "10分" },
         { "type": "选测(三选一)", "items": ["football_dribble", "basketball_dribble", "volleyball_bump"], "scorePerItem": "10分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "sit_and_reach": "25cm", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_and_reach": "25cm", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "sit_and_reach": "10cm" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_and_reach": "10cm" },
       "notes": "统一测试人员、统一项目标准、统一测试器材、统一安排时间、统一场地要求"
     },
     "南充": {
@@ -177,6 +219,8 @@
       ],
       "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "pull_up": "15次", "solid_ball": "12.4米" },
       "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_up_1min": "52次", "solid_ball": "7.8米" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次", "solid_ball": "7.7米" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_up_1min": "24次", "solid_ball": "5.9米" },
       "notes": "2026年抽考项目：男-立定跳远+实心球；女-立定跳远+仰卧起坐。延续2025年抽考模式，促进学校全面教学"
     },
     "达州": {
@@ -188,6 +232,10 @@
         { "type": "必考", "items": ["jump_rope_1min"], "scorePerItem": "按市标准" },
         { "type": "选考(3选1)", "items": ["basketball_dribble", "football_dribble", "volleyball_serve"], "scorePerItem": "15分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "jump_rope_1min": "180次", "basketball_dribble": "20秒", "football_dribble": "7.5秒", "volleyball_serve": "10次" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "jump_rope_1min": "180次", "basketball_dribble": "26秒", "football_dribble": "8.1秒", "volleyball_serve": "10次" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "jump_rope_1min": "80次" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "jump_rope_1min": "80次" },
       "notes": "选考项目2026年确定为：篮球绕杆运球、足球运球绕杆射门、排球发球。各项目采用信息化测试，每人测试2次取最好成绩"
     },
     "雅安": {
@@ -199,6 +247,10 @@
         { "type": "必考", "items_male": ["pull_up"], "items_female": ["sit_up_1min"], "scorePerItem": "10分" },
         { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump", "jump_rope_1min"], "scorePerItem": "15分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "pull_up": "15次", "jump_rope_1min": "180次", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_up_1min": "52次", "jump_rope_1min": "180次", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次", "jump_rope_1min": "80次" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_up_1min": "24次", "jump_rope_1min": "80次" },
       "notes": "具体分值以雅安市招考办最新公布为准"
     },
     "广安": {
@@ -212,6 +264,8 @@
       ],
       "fullScore_male": { "run_1000m": "3'37\"", "jump_rope_30s": "180次", "solid_ball": "14米" },
       "fullScore_female": { "run_800m": "3'34\"", "jump_rope_30s": "180次", "solid_ball": "8米" },
+      "passScore_male": { "run_1000m": "4'55\"", "jump_rope_30s": "80次", "solid_ball": "7.7米" },
+      "passScore_female": { "run_800m": "4'45\"", "jump_rope_30s": "80次", "solid_ball": "5.9米" },
       "notes": "考试通常在5月上旬进行；伤病免考按总分60%计入；肥胖/疾病可申请长跑免试，按必考满分20%计算"
     },
     "巴中": {
@@ -223,6 +277,10 @@
         { "type": "必考", "items_male": ["run_1000m"], "items_female": ["run_800m"], "scorePerItem": "30分" },
         { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump", "table_tennis"], "scorePerItem": "10分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "jump_rope_1min": "180次", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒", "table_tennis": "40次" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "jump_rope_1min": "180次", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒", "table_tennis": "40次" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "jump_rope_1min": "80次" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "jump_rope_1min": "80次" },
       "notes": "3+X方式，三项必考共70分+选考10分=80分"
     },
     "眉山": {
@@ -235,6 +293,10 @@
         { "type": "必考", "items_male": ["pull_up"], "items_female": ["sit_up_1min"], "scorePerItem": "10分" },
         { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump", "table_tennis", "badminton"], "scorePerItem": "10分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "solid_ball": "12.4米", "pull_up": "15次", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒", "table_tennis": "40次", "badminton": "20次" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "solid_ball": "7.8米", "sit_up_1min": "52次", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒", "table_tennis": "40次", "badminton": "20次" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "solid_ball": "7.7米", "pull_up": "5次" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "solid_ball": "5.9米", "sit_up_1min": "24次" },
       "notes": "5项考试共60分"
     },
     "阿坝": {
@@ -246,6 +308,10 @@
         { "type": "必考", "items_male": ["pull_up"], "items_female": ["sit_up_1min"], "scorePerItem": "10分" },
         { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump", "sit_and_reach"], "scorePerItem": "15分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "pull_up": "15次", "sit_and_reach": "25cm", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_up_1min": "52次", "sit_and_reach": "25cm", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次", "sit_and_reach": "10cm" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_up_1min": "24次", "sit_and_reach": "10cm" },
       "notes": "少数民族自治州，具体政策以阿坝州教育局最新公布为准"
     },
     "甘孜": {
@@ -257,6 +323,10 @@
         { "type": "必考", "items_male": ["pull_up"], "items_female": ["sit_up_1min"], "scorePerItem": "10分" },
         { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump", "sit_and_reach"], "scorePerItem": "15分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "pull_up": "15次", "sit_and_reach": "25cm", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_up_1min": "52次", "sit_and_reach": "25cm", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次", "sit_and_reach": "10cm" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_up_1min": "24次", "sit_and_reach": "10cm" },
       "notes": "少数民族自治州，具体政策以甘孜州教育局最新公布为准"
     },
     "凉山": {
@@ -268,6 +338,10 @@
         { "type": "必考", "items_male": ["pull_up"], "items_female": ["sit_up_1min"], "scorePerItem": "10分" },
         { "type": "选考", "items": ["football_dribble", "basketball_dribble", "volleyball_bump", "sit_and_reach"], "scorePerItem": "15分" }
       ],
+      "fullScore_male": { "run_1000m": "3'40\"", "standing_long_jump": "250cm", "pull_up": "15次", "sit_and_reach": "25cm", "football_dribble": "7.5秒", "basketball_dribble": "20秒", "volleyball_bump": "40秒" },
+      "fullScore_female": { "run_800m": "3'25\"", "standing_long_jump": "202cm", "sit_up_1min": "52次", "sit_and_reach": "25cm", "football_dribble": "8.1秒", "basketball_dribble": "26秒", "volleyball_bump": "40秒" },
+      "passScore_male": { "run_1000m": "4'55\"", "standing_long_jump": "185cm", "pull_up": "5次", "sit_and_reach": "10cm" },
+      "passScore_female": { "run_800m": "4'45\"", "standing_long_jump": "146cm", "sit_up_1min": "24次", "sit_and_reach": "10cm" },
       "notes": "少数民族自治州，具体政策以凉山州教育局最新公布为准"
     }
   }

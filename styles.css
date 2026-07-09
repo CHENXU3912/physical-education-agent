@@ -867,6 +867,46 @@ html, body {
     border-top: 1px dashed #cbd5e1;
 }
 
+/* 评分标准表格 */
+.exam-score-table {
+    margin-top: 10px;
+}
+.exam-score-table h6 {
+    font-size: 12px;
+    font-weight: 700;
+    color: #1e40af;
+    margin: 0 0 6px;
+}
+.score-standard-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+}
+.score-standard-table th {
+    background: #1e40af;
+    color: white;
+    padding: 5px 8px;
+    text-align: left;
+    font-weight: 600;
+    border-radius: 4px 4px 0 0;
+}
+.score-standard-table td {
+    padding: 4px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #374151;
+}
+.score-standard-table tr:last-child td {
+    border-bottom: none;
+}
+.score-standard-table .score-full {
+    color: #059669;
+    font-weight: 600;
+}
+.score-standard-table .score-pass {
+    color: #d97706;
+    font-weight: 600;
+}
+
 /* 器材清单 */
 .equipment-list-box {
     background: #f0fdf4;
@@ -959,6 +999,57 @@ html, body {
     font-size: 12px;
     color: #78350f;
     margin: 0;
+}
+
+/* 中考差距分析 */
+.gap-analysis-box {
+    background: linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 12px;
+    border-left: 4px solid #3b82f6;
+}
+.gap-analysis-box h4 {
+    color: #1e40af;
+    margin: 0 0 10px;
+    font-size: 14px;
+}
+.gap-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+}
+.gap-table th {
+    background: #1e40af;
+    color: white;
+    padding: 6px 8px;
+    text-align: left;
+    font-weight: 600;
+    border-radius: 4px 4px 0 0;
+    font-size: 11px;
+}
+.gap-table td {
+    padding: 5px 8px;
+    border-bottom: 1px solid #e2e8f0;
+    color: #374151;
+}
+.gap-table tr:last-child td {
+    border-bottom: none;
+}
+.gap-table .score-full { color: #059669; font-weight: 600; }
+.gap-table .score-pass { color: #d97706; font-weight: 600; }
+.gap-table tr.gap-full { background: rgba(16, 185, 129, 0.08); }
+.gap-table tr.gap-pass { background: rgba(59, 130, 246, 0.05); }
+.gap-table tr.gap-fail { background: rgba(239, 68, 68, 0.08); }
+.gap-table tr.gap-untested { background: rgba(107, 114, 128, 0.06); }
+.gap-priority {
+    margin: 10px 0 0;
+    font-size: 13px;
+    color: #dc2626;
+    font-weight: 600;
+}
+.gap-priority strong {
+    color: #1e40af;
 }
 
 /* 动作卡片 - 需额外器材警告 */
