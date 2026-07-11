@@ -1002,7 +1002,7 @@ function loadReportData() {
                 <div class="summary-item"><div class="value" style="font-size:16px">${weakItems.join('、') || '-'}</div><div class="label">薄弱项目</div></div>
             </div>
         </div>
-        ${lastTest.healthDeclaration === '有异常' ? `<div class="attention-box"><h4>⚠️ 健康声明</h4><p>该学生存在健康异常，请教练注意训练强度，必要时咨询医生意见。</p></div>` : ''}`;
+    </div>`;
 }
 
 // 更新对比模式的测试记录选择器
@@ -1807,11 +1807,6 @@ async function generatePDF() {
     ${generateSuggestions(lastTest, student.grade)}
   </div>
 
-  ${lastTest.healthDeclaration === '有异常' ? `
-  <div class="health-alert">
-    <strong>注意：</strong>该学生存在健康异常情况，请在训练中控制强度，必要时咨询专业医生意见。
-  </div>` : ''}
-
   <div class="footer">
     <span>上门体育 · 体质测试报告</span>
     <span>教练签字: <span class="coach-line"></span></span>
@@ -2407,12 +2402,6 @@ function generateExcel() {
     wsData.push(['优势项目', strongItems.join('、') || '-']);
     wsData.push(['薄弱项目', weakItems.join('、') || '-']);
     wsData.push([]);
-
-    // 健康声明
-    if (lastTest.healthDeclaration === '有异常') {
-        wsData.push(['健康声明']);
-        wsData.push(['该学生存在健康异常，请教练注意训练强度，必要时咨询医生意见。']);
-    }
 
     const ws = XLSX.utils.aoa_to_sheet(wsData);
 
