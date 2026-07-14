@@ -422,7 +422,58 @@
                         <div class="form-actions" style="margin-top:16px;">
                             <button class="btn-primary" onclick="saveFourWeekPlan()">保存周期计划</button>
                             <button class="btn-secondary" onclick="exportFourWeekPlanPDF()" style="background:#dc2626;color:#fff;">📄 导出周期计划PDF</button>
+                            <button class="btn-secondary" onclick="generateFourWeekPlan()" style="background:#6366f1;color:#fff;">🔄 重新生成</button>
                             <button class="btn-secondary" onclick="closeFourWeekPlan()">返回单次方案</button>
+                        </div>
+                    </div>
+
+                    <!-- 4周计划生成前引导弹窗 -->
+                    <div id="cycleGuideModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;">
+                        <div style="background:#fff;border-radius:16px;padding:28px;max-width:480px;width:90%;max-height:90vh;overflow-y:auto;">
+                            <h3 style="margin:0 0 6px;font-size:18px;color:#1f2937;">📋 生成4周周期化训练计划</h3>
+                            <p style="font-size:13px;color:#6b7280;margin:0 0 20px;">请确认训练安排，系统将据此生成个性化周期计划</p>
+
+                            <!-- 每周训练次数 -->
+                            <div style="margin-bottom:20px;">
+                                <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:8px;">🗓️ 每周训练次数</label>
+                                <div style="display:flex;gap:8px;">
+                                    <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;transition:all 0.2s;" id="freqLabel_2">
+                                        <input type="radio" name="cycleWeeklyFreq" value="2" style="display:none;">
+                                        <span style="font-size:14px;font-weight:600;">2次/周</span>
+                                    </label>
+                                    <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border:2px solid #6366f1;border-radius:8px;cursor:pointer;transition:all 0.2s;background:#6366f110;" id="freqLabel_3">
+                                        <input type="radio" name="cycleWeeklyFreq" value="3" style="display:none;" checked>
+                                        <span style="font-size:14px;font-weight:600;color:#6366f1;">3次/周</span>
+                                    </label>
+                                    <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;transition:all 0.2s;" id="freqLabel_4">
+                                        <input type="radio" name="cycleWeeklyFreq" value="4" style="display:none;">
+                                        <span style="font-size:14px;font-weight:600;">4次/周</span>
+                                    </label>
+                                </div>
+                                <p style="font-size:11px;color:#9ca3af;margin:6px 0 0;">建议每周训练3次（周一速度/周三耐力/周五综合），2次可选择任意2天，4次增加周日补充训练</p>
+                            </div>
+
+                            <!-- 每次训练课时长 -->
+                            <div style="margin-bottom:20px;">
+                                <label style="font-size:14px;font-weight:600;color:#374151;display:block;margin-bottom:8px;">⏱️ 每次训练课时长</label>
+                                <div style="display:flex;gap:8px;">
+                                    <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border:2px solid #6366f1;border-radius:8px;cursor:pointer;transition:all 0.2s;background:#6366f110;" id="durLabel_60">
+                                        <input type="radio" name="cycleSessionDuration" value="60" style="display:none;" checked>
+                                        <span style="font-size:14px;font-weight:600;color:#6366f1;">60分钟</span>
+                                    </label>
+                                    <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:10px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;transition:all 0.2s;" id="durLabel_90">
+                                        <input type="radio" name="cycleSessionDuration" value="90" style="display:none;">
+                                        <span style="font-size:14px;font-weight:600;">90分钟</span>
+                                    </label>
+                                </div>
+                                <p style="font-size:11px;color:#9ca3af;margin:6px 0 0;">60分钟：热身10min+主体40min+放松10min；90分钟：热身15min+主体60min+放松15min</p>
+                            </div>
+
+                            <!-- 按钮组 -->
+                            <div style="display:flex;gap:12px;margin-top:24px;">
+                                <button class="btn-primary" style="flex:1;background:#6366f1;" onclick="confirmCycleGuide()">✅ 确认并生成</button>
+                                <button class="btn-secondary" style="flex:1;" onclick="cancelCycleGuide()">取消</button>
+                            </div>
                         </div>
                     </div>
                 </div>

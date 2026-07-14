@@ -5691,8 +5691,81 @@ const DAY_THEMES = [
     { day: '周五', name: '综合/技术日', icon: '🎯', qualities: ['协调性', '灵敏素质', '核心力量', '柔韧性'], goal: 'general', focus: '综合体能与技术训练，全面发展身体素质，注重动作质量' }
 ];
 
-// 生成4周周期化训练计划
+// 周期配置参数（由引导弹窗设置）
+let cycleWeeklyFreq = 3;
+let cycleSessionDuration = 60;
+
+// 显示生成前引导弹窗
 function generateFourWeekPlan() {
+    const studentId = document.getElementById('trainingStudentSelect').value;
+    if (!studentId) { showToast('请先选择学生', 'error'); return; }
+    // 显示引导弹窗
+    const modal = document.getElementById('cycleGuideModal');
+    modal.style.display = 'flex';
+}
+
+// 确认引导参数并生成计划
+function confirmCycleGuide() {
+    // 读取选择的参数
+    const freqRadios = document.getElementsByName('cycleWeeklyFreq');
+    freqRadios.forEach(r => { if (r.checked) cycleWeeklyFreq = parseInt(r.value); });
+    const durRadios = document.getElementsByName('cycleSessionDuration');
+    durRadios.forEach(r => { if (r.checked) cycleSessionDuration = parseInt(r.value); });
+
+    // 关闭弹窗
+    document.getElementById('cycleGuideModal').style.display = 'none';
+
+    // 生成计划
+    doGenerateFourWeekPlan();
+}
+
+// 取消引导弹窗
+function cancelCycleGuide() {
+    document.getElementById('cycleGuideModal').style.display = 'none';
+}
+
+// 引导弹窗中 radio 选择样式切换
+function setupCycleGuideRadios() {
+    // 频率选择
+    document.querySelectorAll('input[name="cycleWeeklyFreq"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('label[id^="freqLabel_"]').forEach(label => {
+                label.style.borderColor = '#e5e7eb';
+                label.style.background = '';
+                const span = label.querySelector('span');
+                if (span) span.style.color = '';
+            });
+            const selectedLabel = document.getElementById('freqLabel_' + this.value);
+            if (selectedLabel) {
+                selectedLabel.style.borderColor = '#6366f1';
+                selectedLabel.style.background = '#6366f110';
+                const span = selectedLabel.querySelector('span');
+                if (span) span.style.color = '#6366f1';
+            }
+        });
+    });
+    // 时长选择
+    document.querySelectorAll('input[name="cycleSessionDuration"]').forEach(radio => {
+        radio.addEventListener('change', function() {
+            document.querySelectorAll('label[id^="durLabel_"]').forEach(label => {
+                label.style.borderColor = '#e5e7eb';
+                label.style.background = '';
+                const span = label.querySelector('span');
+                if (span) span.style.color = '';
+            });
+            const selectedLabel = document.getElementById('durLabel_' + this.value);
+            if (selectedLabel) {
+                selectedLabel.style.borderColor = '#6366f1';
+                selectedLabel.style.background = '#6366f110';
+                const span = selectedLabel.querySelector('span');
+                if (span) span.style.color = '#6366f1';
+            }
+        });
+    });
+}
+
+// 实际生成4周计划
+function doGenerateFourWeekPlan() {
     const studentId = document.getElementById('trainingStudentSelect').value;
     if (!studentId) { showToast('请先选择学生', 'error'); return; }
     const student = students.find(s => s.id === studentId);
@@ -5715,7 +5788,7 @@ function generateFourWeekPlan() {
     }
 
     // 构建4周计划
-    const plan = buildFourWeekPlan(student, grade, ageGroup, targetQualities, lastTest);
+    const plan = buildFourWeekPlan(student, grade, ageGroup, targetQualities, lastTest, cycleWeeklyFreq, cycleSessionDuration);
 
     // 渲染
     const container = document.getElementById('fourWeekPlanContainer');
@@ -5724,28 +5797,32 @@ function generateFourWeekPlan() {
     document.getElementById('trainingActions').style.display = 'none';
     container.style.display = 'block';
     content.innerHTML = renderFourWeekPlan(plan, student, sp);
-    showToast('4周周期化训练计划已生成', 'success');
+    showToast(`4周周期化训练计划已生成（每周${cycleWeeklyFreq}次·每次${cycleSessionDuration}分钟）`, 'success');
 }
 
 // 构建4周周期化训练计划
-function buildFourWeekPlan(student, grade, ageGroupKey, targetQualities, lastTest) {
-    const weeks = [];
+function buildFourWeekPlan(student, grade, ageGroupKey, targetQualities, lastTest, weeklyFreq, sessionDuration) {
+    // 根据每周训练次数选择训练日
+    let selectedDays = DAY_THEMES.slice(); // 默认3天
+    if (weeklyFreq === 2) {
+        selectedDays = [DAY_THEMES[0], DAY_THEMES[1]]; // 周一+周三
+    } else if (weeklyFreq === 4) {
+        selectedDays = [DAY_THEMES[0], DAY_THEMES[1], DAY_THEMES[2], { day:'周日', name:'补充训练日', icon:'💪', qualities:['核心力量','柔韧性','平衡能力'], goal:'general', focus:'核心稳定与柔韧性补充训练，巩固技术并促进恢复' }];
+    }
 
+    const weeks = [];
     for (let w = 0; w < 4; w++) {
         const phase = WEEK_PHASES[w];
         const sessions = [];
 
-        for (let d = 0; d < DAY_THEMES.length; d++) {
-            const theme = DAY_THEMES[d];
-            // 根据周阶段和日主题生成单次方案
+        for (let d = 0; d < selectedDays.length; d++) {
+            const theme = selectedDays[d];
             const dayQualities = theme.qualities.filter(q =>
                 (TRAINING_DB.qualityMap[q] || []).length > 0
             );
 
-            // 合并日主题素质和体测薄弱项
             let mergedQualities = [...dayQualities];
             if (targetQualities && targetQualities.length > 0) {
-                // 第1-2周以日主题为主，第3-4周加大薄弱项比重
                 const weakWeight = w >= 2 ? 2 : 1;
                 for (let i = 0; i < weakWeight; i++) {
                     targetQualities.forEach(q => {
@@ -5754,11 +5831,17 @@ function buildFourWeekPlan(student, grade, ageGroupKey, targetQualities, lastTes
                 }
             }
 
-            // 根据周阶段调整难度等级覆盖
             const levelOverride = phase.levelOverride;
             const plan = buildOneHourPlan(mergedQualities, grade, ageGroupKey, currentTrainingGoal, currentExamCity, student, lastTest);
 
-            // 应用周阶段难度覆盖
+            // 90分钟课时：调整时间分配
+            if (sessionDuration === 90) {
+                plan.warmupTime = Math.round(plan.warmupTime * 1.5);
+                plan.mainTime = Math.round(plan.mainTime * 1.5);
+                plan.cooldownTime = Math.round(plan.cooldownTime * 1.5);
+                plan.totalTime = plan.warmupTime + plan.mainTime + plan.cooldownTime;
+            }
+
             if (levelOverride && lastTest) {
                 const applyLevel = (exArr) => exArr.map(ex => {
                     if (!ex.levels) return ex;
@@ -5769,13 +5852,10 @@ function buildFourWeekPlan(student, grade, ageGroupKey, targetQualities, lastTes
                 plan.cooldowns = applyLevel(plan.cooldowns);
             }
 
-            // 第4周：测试日替换为主体测试
             if (w === 3) {
                 plan.isTestWeek = true;
                 plan.testNote = '本周以模拟测试为主，记录成绩并与周期初始数据对比，根据结果调整下周期训练重点。';
             }
-
-            // 第3周：高强度提示
             if (w === 2) {
                 plan.intensityNote = '本周为强化期，每个动作接近最大努力，组间休息适当缩短，模拟比赛强度。';
             }
@@ -5796,10 +5876,8 @@ function buildFourWeekPlan(student, grade, ageGroupKey, targetQualities, lastTes
         });
     }
 
-    // 生成周期总览
     const overview = generateCycleOverview(student, targetQualities, lastTest);
-
-    return { weeks, student, overview, startDate: new Date().toISOString().slice(0, 10) };
+    return { weeks, student, overview, startDate: new Date().toISOString().slice(0, 10), weeklyFreq, sessionDuration };
 }
 
 // 生成周期总览
@@ -5831,6 +5909,7 @@ function renderFourWeekPlan(plan, student, sp) {
         <h2 style="margin:0 0 8px;font-size:22px;">📅 ${student.name}的4周周期化训练计划</h2>
         <p style="margin:0;opacity:0.9;font-size:14px;">${sp.name}（${sp.ageRange}）· ${goalLabel} · 开始日期：${plan.startDate}</p>
         <p style="margin:8px 0 0;opacity:0.8;font-size:13px;">📋 ${plan.overview.baseline}</p>
+        <p style="margin:4px 0 0;opacity:0.8;font-size:13px;">🗓️ 每周${plan.weeklyFreq || 3}次训练 · 每次${plan.sessionDuration || 60}分钟</p>
     </div>
 
     <!-- 周期结构总览 -->
@@ -5898,6 +5977,22 @@ function renderFourWeekPlan(plan, student, sp) {
                 });
                 sessionHTML += `</div>`;
 
+                // 详细方案容器（默认隐藏）
+                const detailKey = `detail_w${week.weekNum}_d${session.day}`;
+                sessionHTML += `
+                    <div id="${detailKey}" style="display:none;margin-top:10px;padding-top:10px;border-top:1px dashed #e5e7eb;">
+                        <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin-bottom:8px;">🔥 热身阶段（约${p.warmupTime}分钟）</div>
+                        ${p.warmups.map((ex, i) => renderExerciseCard(ex, i)).join('')}
+                        <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin:12px 0 8px;">💪 主体训练（约${p.mainTime}分钟）</div>
+                        ${p.mainExercises.map((ex, i) => renderExerciseCard(ex, i)).join('')}
+                        <div style="font-size:13px;font-weight:700;color:var(--text-primary);margin:12px 0 8px;">🧘 整理放松（约${p.cooldownTime}分钟）</div>
+                        ${p.cooldowns.map((ex, i) => renderExerciseCard(ex, i)).join('')}
+                    </div>
+                    <div style="margin-top:8px;text-align:center;">
+                        <span onclick="toggleSessionDetail('${detailKey}', this)" style="display:inline-block;padding:4px 16px;background:#6366f110;color:#6366f1;border-radius:6px;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;">📋 查看详细方案</span>
+                    </div>
+                `;
+
                 // 进度追踪
                 const sessionKey = `w${week.weekNum}_d${session.day}`;
                 sessionHTML += `
@@ -5936,7 +6031,7 @@ function renderFourWeekPlan(plan, student, sp) {
     <div style="background:#f0f7ff;border:1px solid #bfdbfe;border-radius:8px;padding:16px;margin-bottom:16px;">
         <p style="font-size:13px;color:#1e3a5f;line-height:1.7;margin:0;">
             💡 本4周周期化训练计划基于${sp.name}（${sp.ageRange}）身体素质发展敏感期理论生成。
-            每周3次训练（周一速度/爆发力、周三耐力、周五综合/技术），循序渐进，4周后重新评估。
+            每周${plan.weeklyFreq || 3}次训练，每次${plan.sessionDuration || 60}分钟，循序渐进，4周后重新评估。
             建议每次训练后记录完成情况，如学生出现不适应及时调整。
         </p>
     </div>
@@ -5951,6 +6046,29 @@ function closeFourWeekPlan() {
     document.getElementById('trainingContent').style.display = 'block';
     document.getElementById('trainingActions').style.display = 'block';
 }
+
+// 展开/折叠课程详细方案
+function toggleSessionDetail(detailKey, triggerEl) {
+    const detailDiv = document.getElementById(detailKey);
+    if (!detailDiv) return;
+    const isHidden = detailDiv.style.display === 'none';
+    detailDiv.style.display = isHidden ? 'block' : 'none';
+    if (triggerEl) {
+        triggerEl.textContent = isHidden ? '📋 收起详细方案' : '📋 查看详细方案';
+        triggerEl.style.background = isHidden ? '#6366f120' : '#6366f110';
+    }
+    // 展开时滚动到详细方案位置
+    if (isHidden && detailDiv) {
+        setTimeout(() => {
+            detailDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    }
+}
+
+// 初始化引导弹窗 radio 事件
+document.addEventListener('DOMContentLoaded', () => {
+    setupCycleGuideRadios();
+});
 
 // 进度追踪：切换训练完成状态
 function toggleSessionProgress(sessionKey, weekNum, dayName) {
