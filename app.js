@@ -1535,78 +1535,22 @@ async function exportPDFFromHTML(html, filename) {
             }
         });
 
-        // 3. 智能分页：在 section 边界处切割，避免内容被截断
-        var pdf = new jspdf.jsPDF('p', 'mm', 'a4');
-        var pdfWidth = pdf.internal.pageSize.getWidth();
-        var pdfHeight = pdf.internal.pageSize.getHeight();
-        var pageHeightInPx = Math.floor((pdfHeight / pdfWidth) * canvas.width);
-        var canvasH = canvas.height;
+        // 3. 动态单页输出：根据内容实际高度设置 PDF 页面尺寸，全部放一页
+        var a4WidthMM = 210; // A4 宽度 mm
+        var canvasWidthPx = canvas.width;
+        var canvasHeightPx = canvas.height;
+        // 将 canvas 像素高度转换为 mm（保持与宽度同比例）
+        var contentHeightMM = Math.ceil((canvasHeightPx * a4WidthMM) / canvasWidthPx);
 
-        if (canvasH <= pageHeightInPx) {
-            // 内容不超过一页，直接输出
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, (canvasH * pdfWidth) / canvas.width);
-        } else if (canvasH <= pageHeightInPx * 1.05) {
-            // 内容略微超出一页（5% 以内），缩放到单页输出，避免不美观的分页
-            var scaledHeight = (canvasH * pdfWidth) / canvas.width;
-            pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, pdfWidth, scaledHeight);
-        } else {
-            // 多页：智能寻找最佳切割点
-            var currentY = 0;
-            var pageIndex = 0;
-            var maxPages = 30; // 安全上限
+        // 创建自定义页面尺寸的 PDF（宽度=A4，高度=内容实际高度）
+        var pdf = new jspdf.jsPDF({
+            orientation: 'p',
+            unit: 'mm',
+            format: [a4WidthMM, contentHeightMM]
+        });
 
-            while (currentY < canvasH && pageIndex < maxPages) {
-                var idealCut = currentY + pageHeightInPx;
-                if (idealCut >= canvasH) {
-                    // 最后一页，剩余内容全部放入
-                    idealCut = canvasH;
-                } else {
-                    // 在断点列表中寻找最接近 idealCut 的值
-                    // 优先选择不超过 idealCut 的最大断点（向前断，避免溢出）
-                    var bestCut = idealCut;
-                    var foundBetter = false;
-                    for (var bi = 0; bi < breakPoints.length; bi++) {
-                        var bp = breakPoints[bi];
-                        if (bp > currentY + 50 && bp <= idealCut) {
-                            // 断点在当前页有效范围内（至少留 50px 内容）
-                            bestCut = bp;
-                            foundBetter = true;
-                        }
-                    }
-                    if (!foundBetter) {
-                        // 如果没有找到向前的断点，尝试向后找（稍微超出 idealCut）
-                        for (var bi2 = 0; bi2 < breakPoints.length; bi2++) {
-                            var bp2 = breakPoints[bi2];
-                            if (bp2 > idealCut && bp2 <= idealCut + pageHeightInPx * 0.15) {
-                                bestCut = bp2;
-                                foundBetter = true;
-                                break;
-                            }
-                        }
-                    }
-                    idealCut = bestCut;
-                }
-
-                // 切割 canvas：从 currentY 到 idealCut
-                var sliceHeight = Math.round(idealCut - currentY);
-                if (sliceHeight <= 0) sliceHeight = pageHeightInPx; // 安全兜底
-
-                var pageCanvas = document.createElement('canvas');
-                pageCanvas.width = canvas.width;
-                pageCanvas.height = sliceHeight;
-                var ctx = pageCanvas.getContext('2d');
-                ctx.fillStyle = '#ffffff';
-                ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
-                ctx.drawImage(canvas, 0, -currentY);
-
-                var pageImgData = pageCanvas.toDataURL('image/png');
-                if (pageIndex > 0) pdf.addPage();
-                pdf.addImage(pageImgData, 'PNG', 0, 0, pdfWidth, (sliceHeight * pdfWidth) / canvas.width);
-
-                currentY = idealCut;
-                pageIndex++;
-            }
-        }
+        // 整个 canvas 作为单页输出
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, a4WidthMM, contentHeightMM);
         pdf.save(filename);
         showToast('PDF 已导出', 'success');
     } catch (err) {
