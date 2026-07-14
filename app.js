@@ -863,6 +863,41 @@ function getLastTest(studentId) {
     return student.tests[student.tests.length - 1];
 }
 
+// 获取报告页选中的体测记录（未选则返回最新一次）
+function getSelectedTest(studentId) {
+    const select = document.getElementById('reportTestSelect');
+    const testId = select ? select.value : '';
+    if (testId) {
+        const student = students.find(s => s.id === studentId);
+        if (student && student.tests) {
+            const found = student.tests.find(t => t.id === testId);
+            if (found) return found;
+        }
+    }
+    return getLastTest(studentId);
+}
+
+// 更新体测记录选择器
+function updateTestRecordSelector(studentId) {
+    const student = students.find(s => s.id === studentId);
+    const section = document.getElementById('testRecordSection');
+    const select = document.getElementById('reportTestSelect');
+    if (!student || !student.tests || student.tests.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = 'block';
+    // 按日期降序排列（最新在前）
+    const sorted = [...student.tests].sort((a, b) => new Date(b.date) - new Date(a.date));
+    select.innerHTML = '<option value="">-- 最新一次 --</option>';
+    sorted.forEach(test => {
+        const opt = new Option(`${test.date} (${test.totalScore || '-'}分)`, test.id);
+        select.add(opt);
+    });
+    // 默认选最新一次（即空值，走 getLastTest 逻辑）
+    select.value = '';
+}
+
 // 从 Supabase 获取学生最近一次体测（用于报告页）
 async function fetchLastTest(studentId) {
     const tests = await fetchStudentTests(studentId);
@@ -911,6 +946,7 @@ function loadReportData() {
     const studentId = document.getElementById('reportStudentSelect').value;
     const preview = document.getElementById('reportPreview');
     const compareSection = document.getElementById('compareSection');
+    const testRecordSection = document.getElementById('testRecordSection');
     if (!studentId) { 
         preview.innerHTML = `
             <div class="empty-state">
@@ -920,15 +956,20 @@ function loadReportData() {
             </div>
         `; 
         compareSection.style.display = 'none';
+        testRecordSection.style.display = 'none';
         return; 
     }
     const student = students.find(s => s.id === studentId);
     if (!student) return;
     
+    // 更新体测记录选择器
+    updateTestRecordSelector(studentId);
+    
     // 更新对比模式的测试记录下拉列表
     updateCompareSelectors(studentId);
     
-    const lastTest = getLastTest(studentId);
+    // 获取选中的体测记录（默认为最新一次）
+    const lastTest = getSelectedTest(studentId);
     if (!lastTest) { 
         preview.innerHTML = `
             <div class="empty-state">
@@ -1589,7 +1630,7 @@ async function generatePDF() {
     }
 
     // 单次报告路径
-    const lastTest = getLastTest(studentId);
+    const lastTest = getSelectedTest(studentId);
     if (!lastTest) { showToast('该学生暂无体测记录', 'error'); return; }
 
     // 计算优势/提升方向（确保不重复）
@@ -2700,7 +2741,7 @@ function generateExcel() {
         if (test1 && test2) { renderCompareExcel(student, test1, test2); return; }
     }
 
-    const lastTest = getLastTest(studentId);
+    const lastTest = getSelectedTest(studentId);
     if (!lastTest) { showToast('该学生暂无体测记录', 'error'); return; }
 
     showToast('正在生成 Excel...', 'info');

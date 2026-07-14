@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>上门体育智能体</title>
-    <link rel="stylesheet" href="styles.css?v=20260712e">
+    <link rel="stylesheet" href="styles.css?v=20260712f">
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <!-- 文档解析依赖库 -->
@@ -277,6 +277,14 @@
                         <h3>选择学生</h3>
                         <select id="reportStudentSelect" onchange="loadReportData()">
                             <option value="">-- 请选择学生 --</option>
+                        </select>
+                    </div>
+
+                    <!-- 体测记录选择区 -->
+                    <div class="form-section" id="testRecordSection" style="display:none;">
+                        <h3>选择体测记录</h3>
+                        <select id="reportTestSelect" onchange="loadReportData()">
+                            <option value="">-- 最新一次 --</option>
                         </select>
                     </div>
 
@@ -764,8 +772,8 @@
         }
     </script>
     <!-- db.js + app.js（外部引用，带版本号） -->
-    <script src="js/db.js?v=20260712e"></script>
+    <script src="js/db.js?v=20260712f"></script>
     <!-- 应用主逻辑 -->
-    <script src="app.js?v=20260712e"></script>
+    <script src="app.js?v=20260712f"></script>
 </body>
 </html>
