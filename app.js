@@ -3624,8 +3624,9 @@ function generateTrainingPlan() {
             : '<p style="color:var(--text-light);">未选择薄弱项，将根据训练目标生成方案</p>';
     }
 
-    // 生成1小时训练方案
-    const plan = buildOneHourPlan(targetQualities, grade, ageGroup, currentTrainingGoal, currentExamCity, student, currentTrainingMode === 'auto' ? getLastTest(studentId) : null);
+    // 生成训练方案
+    const sessionDuration = parseInt(document.getElementById('sessionDurationSelect')?.value) || 60;
+    const plan = buildOneHourPlan(targetQualities, grade, ageGroup, currentTrainingGoal, currentExamCity, student, currentTrainingMode === 'auto' ? getLastTest(studentId) : null, sessionDuration);
 
     // 渲染方案
     content.innerHTML = renderTrainingPlan(plan, student, sp, weakItemsHTML, targetQualities, currentTrainingGoal, goalLabel, gapAnalysisHTML);
@@ -3789,16 +3790,23 @@ function getExerciseAtLevel(ex, level) {
     };
 }
 
-function buildOneHourPlan(targetQualities, grade, ageGroupKey, goal, examCity, student, lastTest) {
+function buildOneHourPlan(targetQualities, grade, ageGroupKey, goal, examCity, student, lastTest, sessionDuration) {
+    sessionDuration = sessionDuration || 60;
+    const is90Min = sessionDuration === 90;
+    // 60min: 2热身+5主体+2放松; 90min: 3热身+7主体+3放松
+    const warmupCount = is90Min ? 3 : 2;
+    const maxMainCount = is90Min ? 7 : 5;
+    const cooldownCount = is90Min ? 3 : 2;
+
     const allExercises = [];
     Object.values(TRAINING_DB.exercises).forEach(arr => allExercises.push(...arr));
 
     const ageOK = ex => grade >= 1 ? isAgeAppropriate(ex, grade) : true;
     const eqOK = ex => isEquipmentAvailable(ex);
 
-    // 1. 热身阶段 (10分钟) — 优先器材可用+年龄适合
+    // 1. 热身阶段 — 优先器材可用+年龄适合
     const warmupPool = TRAINING_DB.exercises.warmup.filter(ex => ageOK(ex) && eqOK(ex));
-    const warmups = pickExercises(warmupPool, 2, grade);
+    const warmups = pickExercises(warmupPool, warmupCount, grade);
 
     // 2. 主体训练 (40分钟) — 根据训练目标选择
     let mainExercises = [];
@@ -3864,7 +3872,7 @@ function buildOneHourPlan(targetQualities, grade, ageGroupKey, goal, examCity, s
         }
     }
 
-    mainExercises = mainExercises.slice(0, 5);
+    mainExercises = mainExercises.slice(0, maxMainCount);
 
     // 确保至少有3个主体练习
     if (mainExercises.length < 3) {
@@ -3874,10 +3882,10 @@ function buildOneHourPlan(targetQualities, grade, ageGroupKey, goal, examCity, s
         mainExercises.push(...pickExercises(auxPool, 3 - mainExercises.length, grade));
     }
 
-    // 3. 整理放松 (10分钟)
+    // 3. 整理放松
     const cooldownPool = TRAINING_DB.exercises.cooldown.filter(ex => ageOK(ex) && eqOK(ex));
-    const cooldowns = pickExercises(cooldownPool, 2, grade);
-    if (mainExercises.some(e => e.difficulty >= 2) && cooldowns.length < 3) {
+    const cooldowns = pickExercises(cooldownPool, cooldownCount, grade);
+    if (mainExercises.some(e => e.difficulty >= 2) && cooldowns.length < (is90Min ? 4 : 3)) {
         const extra = cooldownPool.filter(e => !cooldowns.find(c => c.id === e.id));
         if (extra.length > 0) cooldowns.push(extra[0]);
     }
@@ -5832,15 +5840,7 @@ function buildFourWeekPlan(student, grade, ageGroupKey, targetQualities, lastTes
             }
 
             const levelOverride = phase.levelOverride;
-            const plan = buildOneHourPlan(mergedQualities, grade, ageGroupKey, currentTrainingGoal, currentExamCity, student, lastTest);
-
-            // 90分钟课时：调整时间分配
-            if (sessionDuration === 90) {
-                plan.warmupTime = Math.round(plan.warmupTime * 1.5);
-                plan.mainTime = Math.round(plan.mainTime * 1.5);
-                plan.cooldownTime = Math.round(plan.cooldownTime * 1.5);
-                plan.totalTime = plan.warmupTime + plan.mainTime + plan.cooldownTime;
-            }
+            const plan = buildOneHourPlan(mergedQualities, grade, ageGroupKey, currentTrainingGoal, currentExamCity, student, lastTest, sessionDuration);
 
             if (levelOverride && lastTest) {
                 const applyLevel = (exArr) => exArr.map(ex => {

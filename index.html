@@ -367,6 +367,14 @@
                             <option value="exam_prep">中考体育专项训练</option>
                         </select>
 
+                        <div style="margin-bottom:12px;">
+                            <label style="font-size:13px;color:var(--text-light);display:block;margin-bottom:4px;">课程时长</label>
+                            <select id="sessionDurationSelect" onchange="generateTrainingPlan()" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+                                <option value="60">60分钟（热身10+主体40+放松10）</option>
+                                <option value="90">90分钟（热身15+主体60+放松15）</option>
+                            </select>
+                        </div>
+
                         <div class="form-row" id="examCityRow" style="display:none; margin-bottom:12px; flex-direction:column; gap:8px;">
                             <div class="form-group" style="flex:1; display:flex; gap:8px; align-items:flex-end;">
                                 <div style="flex:1;">
@@ -394,7 +402,7 @@
 
                         <!-- 自动模式：显示体测分析 -->
                         <div id="autoModePanel" class="mode-panel">
-                            <p class="mode-hint">系统将根据学生最近一次体测成绩，自动分析薄弱项并生成科学的1小时训练方案</p>
+                            <p class="mode-hint">系统将根据学生最近一次体测成绩，自动分析薄弱项并生成科学的个性化训练方案</p>
                         </div>
 
                         <!-- 手动模式：教练选择薄弱项 -->
