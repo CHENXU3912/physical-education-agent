@@ -3949,7 +3949,7 @@ function pickExercises(pool, count, grade) {
     return result;
 }
 
-// 按时间目标挑选动作：持续添加直到总时长 >= targetMinutes
+// 按时间目标挑选动作：持续添加直到总时长 >= targetMinutes，然后做最优拟合
 function pickExercisesByTime(pool, targetMinutes, grade, maxCount) {
     if (pool.length === 0) return [];
     maxCount = maxCount || 10;
@@ -3970,6 +3970,15 @@ function pickExercisesByTime(pool, targetMinutes, grade, maxCount) {
             totalTime += ex.duration;
         }
         candidates.splice(idx, 1);
+    }
+    // 最优拟合：如果超调了且去掉最后一个动作后更接近目标，则去掉
+    if (result.length > 1 && totalTime > targetMinutes) {
+        const lastDur = result[result.length - 1].duration;
+        const withoutLast = totalTime - lastDur;
+        if (Math.abs(withoutLast - targetMinutes) < Math.abs(totalTime - targetMinutes) && withoutLast >= targetMinutes * 0.6) {
+            result.pop();
+            totalTime = withoutLast;
+        }
     }
     return result;
 }
