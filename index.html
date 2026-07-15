@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>上门体育智能体</title>
-    <link rel="stylesheet" href="styles.css?v=20260715b">
+    <link rel="stylesheet" href="styles.css?v=20260715c">
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <!-- 文档解析依赖库 -->
@@ -426,6 +426,7 @@
                             </div>
                             <button class="btn-primary" onclick="generateCustomPlan()">📋 生成自选方案</button>
                             <button class="btn-secondary" onclick="clearCustomSelections()">清空选择</button>
+                            <button class="btn-secondary" onclick="openCustomExerciseModal()" style="background:#059669;color:#fff;">➕ 自建动作</button>
                         </div>
                     </div>
 
@@ -497,6 +498,95 @@
                             <div style="display:flex;gap:12px;margin-top:24px;">
                                 <button class="btn-primary" style="flex:1;background:#6366f1;" onclick="confirmCycleGuide()">✅ 确认并生成</button>
                                 <button class="btn-secondary" style="flex:1;" onclick="cancelCycleGuide()">取消</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 教练自建动作弹窗 -->
+                    <div id="customExerciseModal" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10001;align-items:center;justify-content:center;">
+                        <div style="background:#fff;border-radius:16px;padding:24px;max-width:560px;width:90%;max-height:90vh;overflow-y:auto;">
+                            <h3 style="margin:0 0 16px;font-size:18px;color:#1f2937;">➕ 教练自建训练动作</h3>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">动作名称 <span style="color:#ef4444;">*</span></label>
+                                <input type="text" id="ceName" placeholder="如：绳梯高抬腿组合" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">动作分类 <span style="color:#ef4444;">*</span></label>
+                                <select id="ceCategory" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+                                    <option value="warmup">热身</option><option value="speed">速度</option><option value="agility">灵敏</option>
+                                    <option value="strength">力量</option><option value="endurance">耐力</option><option value="flexibility">柔韧</option>
+                                    <option value="coordination">协调</option><option value="balance">平衡</option><option value="cooldown">放松</option>
+                                </select>
+                            </div>
+                            <div style="display:flex;gap:12px;margin-bottom:12px;">
+                                <div style="flex:1;">
+                                    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">难度</label>
+                                    <select id="ceDifficulty" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;">
+                                        <option value="1">★☆☆ 基础</option><option value="2">★★☆ 中等</option><option value="3">★★★ 进阶</option>
+                                    </select>
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">适用年龄</label>
+                                    <div style="display:flex;gap:4px;align-items:center;">
+                                        <input type="number" id="ceAgeMin" value="6" min="3" max="18" style="width:60px;padding:8px;border:1px solid #ddd;border-radius:6px;">
+                                        <span>~</span>
+                                        <input type="number" id="ceAgeMax" value="18" min="3" max="18" style="width:60px;padding:8px;border:1px solid #ddd;border-radius:6px;">
+                                        <span style="font-size:12px;color:var(--text-light);">岁</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">所需器材（可多选）</label>
+                                <div id="ceEquipment" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">计量方式</label>
+                                <div style="display:flex;gap:8px;">
+                                    <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border:2px solid #059669;border-radius:8px;cursor:pointer;background:#05966910;" id="ceMeasureLabel_reps">
+                                        <input type="radio" name="ceMeasure" value="reps" checked style="display:none;"><span style="font-size:13px;font-weight:600;color:#059669;">次数×组数</span>
+                                    </label>
+                                    <label style="flex:1;display:flex;align-items:center;justify-content:center;gap:4px;padding:8px;border:2px solid #e5e7eb;border-radius:8px;cursor:pointer;" id="ceMeasureLabel_time">
+                                        <input type="radio" name="ceMeasure" value="time" style="display:none;"><span style="font-size:13px;font-weight:600;">时间×组数</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div style="display:flex;gap:12px;margin-bottom:12px;">
+                                <div style="flex:1;">
+                                    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;" id="ceRepsLabel">每组次数/距离</label>
+                                    <input type="text" id="ceReps" placeholder="如：15米 或 10次" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">组数</label>
+                                    <input type="number" id="ceSets" value="4" min="1" max="10" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+                                </div>
+                                <div style="flex:1;">
+                                    <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">组间休息(秒)</label>
+                                    <input type="number" id="ceRest" value="60" min="0" max="300" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:14px;">
+                                </div>
+                            </div>
+                            <div style="margin-bottom:12px;padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:13px;color:#166534;">⏱ 系统估算时长：</span>
+                                    <input type="number" id="ceDuration" value="8" min="1" max="30" style="width:60px;padding:4px 8px;border:1px solid #ddd;border-radius:4px;font-size:14px;font-weight:700;color:#059669;">
+                                    <span style="font-size:13px;color:#166534;">分钟</span>
+                                    <span style="font-size:11px;color:#6b7280;margin-left:auto;">可手动修改</span>
+                                </div>
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">练习流程</label>
+                                <textarea id="ceDescription" rows="3" placeholder="描述动作的执行流程，如场地布置、执行步骤等" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;resize:vertical;"></textarea>
+                            </div>
+                            <div style="margin-bottom:12px;">
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">动作要领</label>
+                                <textarea id="ceCoaching" rows="2" placeholder="动作技术要领和注意事项" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;resize:vertical;"></textarea>
+                            </div>
+                            <div style="margin-bottom:16px;">
+                                <label style="font-size:13px;font-weight:600;display:block;margin-bottom:4px;">安全提示</label>
+                                <textarea id="ceSafety" rows="2" placeholder="安全注意事项和禁忌" style="width:100%;padding:8px 12px;border:1px solid #ddd;border-radius:6px;font-size:13px;resize:vertical;"></textarea>
+                            </div>
+                            <div style="display:flex;gap:12px;">
+                                <button class="btn-primary" style="flex:1;background:#059669;" onclick="saveCustomExercise()">💾 保存至动作库</button>
+                                <button class="btn-secondary" style="flex:1;" onclick="closeCustomExerciseModal()">取消</button>
                             </div>
                         </div>
                     </div>
@@ -859,8 +949,8 @@
         }
     </script>
     <!-- db.js + app.js（外部引用，带版本号） -->
-    <script src="js/db.js?v=20260715b"></script>
+    <script src="js/db.js?v=20260715c"></script>
     <!-- 应用主逻辑 -->
-    <script src="app.js?v=20260715b"></script>
+    <script src="app.js?v=20260715c"></script>
 </body>
 </html>

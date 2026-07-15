@@ -75,6 +75,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     // 1. 先初始化 UI — 无论 auth 状态如何，导航和主题都能用
     initNavigation();
     initTheme();
+    // 加载教练自建动作
+    loadCustomExercises();
     // 初始化上传页省/市选择器（TRAINING_DB 已在同一文件中定义，此时可用）
     initUploadProvinceSelector();
     initReportProvinceSelector();
@@ -3688,6 +3690,100 @@ function onTrainingGoalChange() {
         cityRow.style.display = 'none';
     }
     generateTrainingPlan();
+}
+
+// ==================== 教练自建动作 ====================
+function openCustomExerciseModal() {
+    // 渲染器材选择
+    const eqContainer = document.getElementById('ceEquipment');
+    const allEquip = ['none','ladder','cone','disc','band','tennis','tape','jump_mat','yoga_mat','low_hurdle','high_hurdle','jump_rope','solid_ball','ball'];
+    eqContainer.innerHTML = allEquip.map(eq => `
+        <label style="display:inline-flex;align-items:center;gap:4px;padding:6px 10px;border:1px solid #e5e7eb;border-radius:6px;cursor:pointer;font-size:12px;transition:all 0.2s;" id="ceEqLabel_${eq}">
+            <input type="checkbox" value="${eq}" ${eq === 'none' ? 'checked' : ''} onchange="updateCeEqLabel('${eq}')" style="display:none;">
+            <span>${TRAINING_DB.equipmentNames[eq] || eq}</span>
+        </label>`).join('');
+    document.getElementById('ceName').value = '';
+    document.getElementById('ceDifficulty').value = '1';
+    document.getElementById('ceAgeMin').value = 6;
+    document.getElementById('ceAgeMax').value = 18;
+    document.getElementById('ceSets').value = 4;
+    document.getElementById('ceRest').value = 60;
+    document.getElementById('ceDuration').value = 8;
+    document.getElementById('ceReps').value = '';
+    document.getElementById('ceDescription').value = '';
+    document.getElementById('ceCoaching').value = '';
+    document.getElementById('ceSafety').value = '';
+    document.querySelectorAll('input[name="ceMeasure"]').forEach(radio => {
+        radio.onchange = function() {
+            const isReps = this.value === 'reps';
+            document.getElementById('ceRepsLabel').textContent = isReps ? '每组次数/距离' : '每组时长(秒)';
+            document.getElementById('ceReps').placeholder = isReps ? '如：15米 或 10次' : '如：30';
+            document.getElementById('ceMeasureLabel_reps').style.borderColor = isReps ? '#059669' : '#e5e7eb';
+            document.getElementById('ceMeasureLabel_reps').style.background = isReps ? '#05966910' : '';
+            document.getElementById('ceMeasureLabel_time').style.borderColor = !isReps ? '#059669' : '#e5e7eb';
+            document.getElementById('ceMeasureLabel_time').style.background = !isReps ? '#05966910' : '';
+            estimateExerciseDuration();
+        };
+    });
+    ['ceSets','ceRest','ceReps'].forEach(id => { document.getElementById(id).oninput = estimateExerciseDuration; });
+    document.getElementById('customExerciseModal').style.display = 'flex';
+}
+function updateCeEqLabel(eq) {
+    const label = document.getElementById('ceEqLabel_' + eq);
+    const cb = label.querySelector('input');
+    label.style.borderColor = cb.checked ? '#059669' : '#e5e7eb';
+    label.style.background = cb.checked ? '#05966910' : '';
+}
+function closeCustomExerciseModal() { document.getElementById('customExerciseModal').style.display = 'none'; }
+function estimateExerciseDuration() {
+    const mt = document.querySelector('input[name="ceMeasure"]:checked')?.value || 'reps';
+    const sets = parseInt(document.getElementById('ceSets').value) || 1;
+    const rest = parseInt(document.getElementById('ceRest').value) || 0;
+    const rv = document.getElementById('ceReps').value;
+    let tps;
+    if (mt === 'time') { tps = parseInt(rv) || 30; }
+    else {
+        const nm = rv.match(/(\d+)/);
+        if (nm) { const n = parseInt(nm[1]); tps = rv.includes('米') ? Math.ceil(n * 0.2) + 10 : n * 3; }
+        else tps = 30;
+    }
+    document.getElementById('ceDuration').value = Math.min(Math.max(3, Math.ceil(((tps + rest) * sets - rest) / 60)), 30);
+}
+function saveCustomExercise() {
+    const name = document.getElementById('ceName').value.trim();
+    if (!name) { showToast('请输入动作名称', 'error'); return; }
+    const category = document.getElementById('ceCategory').value;
+    const equipment = [];
+    document.querySelectorAll('#ceEquipment input:checked').forEach(cb => { if (cb.value !== 'none') equipment.push(cb.value); });
+    if (equipment.length === 0) equipment.push('none');
+    const exercise = {
+        id: 'custom_' + Date.now().toString(36), name,
+        targetQualities: ({warmup:['心肺耐力','柔韧性'],speed:['速度'],agility:['灵敏素质'],strength:['力量'],endurance:['心肺耐力'],flexibility:['柔韧性'],coordination:['协调性'],balance:['平衡能力'],cooldown:['柔韧性']})[category] || ['协调性'],
+        ageRange: [parseInt(document.getElementById('ceAgeMin').value), parseInt(document.getElementById('ceAgeMax').value)],
+        difficulty: parseInt(document.getElementById('ceDifficulty').value), equipment,
+        duration: parseInt(document.getElementById('ceDuration').value),
+        sets: document.getElementById('ceSets').value + '组', reps: document.getElementById('ceReps').value.trim() || '适量',
+        restBetween: document.getElementById('ceRest').value + '秒',
+        description: document.getElementById('ceDescription').value.trim() || name,
+        coachingPoints: document.getElementById('ceCoaching').value.trim(),
+        safetyNotes: document.getElementById('ceSafety').value.trim(), _custom: true
+    };
+    if (!TRAINING_DB.exercises[category]) TRAINING_DB.exercises[category] = [];
+    TRAINING_DB.exercises[category].push(exercise);
+    try { const s = JSON.parse(localStorage.getItem('customExercises') || '[]'); s.push({category, exercise}); localStorage.setItem('customExercises', JSON.stringify(s)); } catch(e) {}
+    closeCustomExerciseModal();
+    renderCustomExerciseList(); renderCustomCategoryTabs();
+    showToast(`✅ 动作"${name}"已保存至${CUSTOM_CATEGORY_LABELS[category] || category}分类`, 'success');
+}
+function loadCustomExercises() {
+    try {
+        const saved = JSON.parse(localStorage.getItem('customExercises') || '[]');
+        saved.forEach(item => {
+            if (!TRAINING_DB.exercises[item.category]) TRAINING_DB.exercises[item.category] = [];
+            if (!TRAINING_DB.exercises[item.category].find(e => e.id === item.exercise.id))
+                TRAINING_DB.exercises[item.category].push(item.exercise);
+        });
+    } catch(e) {}
 }
 
 async function onExamProvinceChange() {
