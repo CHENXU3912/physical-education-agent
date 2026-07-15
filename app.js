@@ -3416,14 +3416,265 @@ function switchTrainingMode(mode) {
     currentTrainingMode = mode;
     document.getElementById('modeTabAuto').classList.toggle('active', mode === 'auto');
     document.getElementById('modeTabManual').classList.toggle('active', mode === 'manual');
+    const customTab = document.getElementById('modeTabCustom');
+    if (customTab) customTab.classList.toggle('active', mode === 'custom');
     document.getElementById('autoModePanel').style.display = mode === 'auto' ? 'block' : 'none';
     document.getElementById('manualModePanel').style.display = mode === 'manual' ? 'block' : 'none';
+    const customPanel = document.getElementById('customModePanel');
+    if (customPanel) customPanel.style.display = mode === 'custom' ? 'block' : 'none';
     if (mode === 'auto') {
         generateTrainingPlan();
+    } else if (mode === 'custom') {
+        renderCustomCategoryTabs();
+        renderCustomExerciseList();
+        updateCustomSummary();
+        document.getElementById('trainingContent').innerHTML = '<div class="empty-state"><p>请在上方勾选训练动作后点击「生成自选方案」</p></div>';
+        document.getElementById('trainingActions').style.display = 'none';
     } else {
         document.getElementById('trainingContent').innerHTML = '<div class="empty-state"><p>请勾选上方薄弱项后点击「生成训练方案」</p></div>';
         document.getElementById('trainingActions').style.display = 'none';
     }
+}
+
+// ==================== 教练自选训练模式 ====================
+let customSelectedExercises = [];
+let customCurrentCategory = 'all';
+
+const CUSTOM_CATEGORY_LABELS = {
+    warmup: '热身', speed: '速度', agility: '灵敏', strength: '力量',
+    endurance: '耐力', flexibility: '柔韧', coordination: '协调', balance: '平衡',
+    cooldown: '放松', weight_loss: '减重', height_growth: '追高', exam_prep: '中考专项',
+    nsca_pro: 'NSCA专业', ace_pro: 'ACE专业'
+};
+
+function renderCustomCategoryTabs() {
+    const container = document.getElementById('customCategoryTabs');
+    if (!container) return;
+    const cats = [{ key: 'all', label: '全部' }];
+    Object.keys(TRAINING_DB.exercises).forEach(k => {
+        cats.push({ key: k, label: CUSTOM_CATEGORY_LABELS[k] || k });
+    });
+    container.innerHTML = cats.map(c => `
+        <button class="mode-tab ${c.key === customCurrentCategory ? 'active' : ''}"
+                style="padding:4px 12px;font-size:12px;border-radius:999px;"
+                onclick="customCurrentCategory='${c.key}';renderCustomCategoryTabs();renderCustomExerciseList();">${c.label}</button>
+    `).join('');
+}
+
+function renderCustomExerciseList() {
+    const container = document.getElementById('customExerciseList');
+    if (!container) return;
+    let exercises = [];
+    if (customCurrentCategory === 'all') {
+        Object.values(TRAINING_DB.exercises).forEach(arr => exercises.push(...arr));
+    } else {
+        exercises = TRAINING_DB.exercises[customCurrentCategory] || [];
+    }
+    // Filter by age if student is selected
+    const studentId = document.getElementById('trainingStudentSelect')?.value;
+    const student = studentId ? students.find(s => s.id === studentId) : null;
+    const grade = student ? parseInt(student.grade) : 0;
+    const ageOK = ex => grade >= 1 ? isAgeAppropriate(ex, grade) : true;
+    exercises = exercises.filter(ageOK);
+
+    container.innerHTML = exercises.map(ex => {
+        const isSelected = customSelectedExercises.includes(ex.id);
+        const phase = ex.id.startsWith('wu_') ? '热身' : ex.id.startsWith('cd_') ? '放松' : '主体';
+        const phaseColor = phase === '热身' ? '#10b981' : phase === '放松' ? '#3b82f6' : '#f59e0b';
+        const eqOK = isEquipmentAvailable(ex);
+        return `
+            <div style="display:flex;align-items:flex-start;gap:8px;padding:8px;border-radius:6px;margin-bottom:4px;${isSelected ? 'background:#eff6ff;' : ''}">
+                <input type="checkbox" ${isSelected ? 'checked' : ''} onchange="toggleCustomExercise('${ex.id}')" style="margin-top:4px;cursor:pointer;">
+                <div style="flex:1;">
+                    <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+                        <span style="font-weight:600;font-size:13px;">${ex.name}</span>
+                        <span style="font-size:10px;padding:1px 6px;border-radius:3px;background:${phaseColor}20;color:${phaseColor};">${phase}</span>
+                        <span style="font-size:10px;color:var(--text-light);">${ex.duration}min</span>
+                        <span style="font-size:10px;color:var(--text-light);">${ex.sets || ''}</span>
+                        ${!eqOK ? '<span style="font-size:10px;color:#ef4444;">需额外器材</span>' : ''}
+                    </div>
+                    <p style="font-size:11px;color:var(--text-secondary);margin:2px 0 0;line-height:1.5;">${ex.description || ''}</p>
+                </div>
+            </div>`;
+    }).join('');
+    if (exercises.length === 0) {
+        container.innerHTML = '<p style="text-align:center;color:var(--text-light);padding:20px;">该分类无可用动作</p>';
+    }
+}
+
+function toggleCustomExercise(id) {
+    const idx = customSelectedExercises.indexOf(id);
+    if (idx >= 0) {
+        customSelectedExercises.splice(idx, 1);
+    } else {
+        customSelectedExercises.push(id);
+    }
+    updateCustomSummary();
+    // Re-render list to update checkbox state without full re-render
+    const checkboxes = document.querySelectorAll('#customExerciseList input[type="checkbox"]');
+    checkboxes.forEach(cb => {
+        const exId = cb.getAttribute('onchange').match(/'([^']+)'/)[1];
+        cb.checked = customSelectedExercises.includes(exId);
+    });
+}
+
+function updateCustomSummary() {
+    const container = document.getElementById('customSelectedSummary');
+    if (!container) return;
+    if (customSelectedExercises.length === 0) {
+        container.innerHTML = '<p style="font-size:13px;color:var(--text-light);text-align:center;">请在上方动作列表中勾选训练动作</p>';
+        return;
+    }
+    const allExercises = [];
+    Object.values(TRAINING_DB.exercises).forEach(arr => allExercises.push(...arr));
+    const selected = customSelectedExercises.map(id => allExercises.find(e => e.id === id)).filter(Boolean);
+
+    const warmups = selected.filter(e => e.id.startsWith('wu_'));
+    const mains = selected.filter(e => !e.id.startsWith('wu_') && !e.id.startsWith('cd_'));
+    const cooldowns = selected.filter(e => e.id.startsWith('cd_'));
+
+    const wTime = warmups.reduce((s, e) => s + e.duration, 0);
+    const mTime = mains.reduce((s, e) => s + e.duration, 0);
+    const cTime = cooldowns.reduce((s, e) => s + e.duration, 0);
+    const total = wTime + mTime + cTime;
+
+    container.innerHTML = `
+        <div style="display:flex;gap:12px;margin-bottom:8px;">
+            <div style="flex:1;text-align:center;padding:6px;background:#10b98110;border-radius:6px;">
+                <div style="font-size:11px;color:#065f46;">热身</div>
+                <div style="font-size:18px;font-weight:700;color:#065f46;">${warmups.length}个</div>
+                <div style="font-size:10px;color:#065f46;">${wTime}min</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:6px;background:#f59e0b10;border-radius:6px;">
+                <div style="font-size:11px;color:#92400e;">主体</div>
+                <div style="font-size:18px;font-weight:700;color:#92400e;">${mains.length}个</div>
+                <div style="font-size:10px;color:#92400e;">${mTime}min</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:6px;background:#3b82f610;border-radius:6px;">
+                <div style="font-size:11px;color:#1e40af;">放松</div>
+                <div style="font-size:18px;font-weight:700;color:#1e40af;">${cooldowns.length}个</div>
+                <div style="font-size:10px;color:#1e40af;">${cTime}min</div>
+            </div>
+            <div style="flex:1;text-align:center;padding:6px;background:#6366f110;border-radius:6px;">
+                <div style="font-size:11px;color:#4c1d95;">总计</div>
+                <div style="font-size:18px;font-weight:700;color:#4c1d95;">${selected.length}个</div>
+                <div style="font-size:10px;color:#4c1d95;">${total}min</div>
+            </div>
+        </div>
+        <div style="font-size:11px;color:var(--text-light);">已选动作：${selected.map(e => e.name).join('、')}</div>
+    `;
+}
+
+function clearCustomSelections() {
+    customSelectedExercises = [];
+    renderCustomExerciseList();
+    updateCustomSummary();
+}
+
+function generateCustomPlan() {
+    const studentId = document.getElementById('trainingStudentSelect').value;
+    if (!studentId) { showToast('请先选择学生', 'error'); return; }
+    const student = students.find(s => s.id === studentId);
+    if (!student) return;
+
+    if (customSelectedExercises.length === 0) {
+        showToast('请至少勾选一个训练动作', 'error');
+        return;
+    }
+
+    const allExercises = [];
+    Object.values(TRAINING_DB.exercises).forEach(arr => allExercises.push(...arr));
+
+    const selected = customSelectedExercises.map(id => allExercises.find(e => e.id === id)).filter(Boolean);
+    const warmups = selected.filter(e => e.id.startsWith('wu_'));
+    const mains = selected.filter(e => !e.id.startsWith('wu_') && !e.id.startsWith('cd_'));
+    const cooldowns = selected.filter(e => e.id.startsWith('cd_'));
+
+    const warmupTime = warmups.reduce((s, e) => s + e.duration, 0);
+    const mainTime = mains.reduce((s, e) => s + e.duration, 0);
+    const cooldownTime = cooldowns.reduce((s, e) => s + e.duration, 0);
+    const totalTime = warmupTime + mainTime + cooldownTime;
+
+    const plan = { warmups, mainExercises: mains, cooldowns, warmupTime, mainTime, cooldownTime, totalTime, extraEquipmentWarnings: [] };
+
+    // Collect equipment warnings
+    mains.forEach(ex => {
+        const missing = getMissingEquipment(ex);
+        if (missing.length > 0) {
+            plan.extraEquipmentWarnings.push({ exercise: ex.name, missing: missing.map(m => TRAINING_DB.equipmentNames[m] || m) });
+        }
+    });
+
+    const grade = parseInt(student.grade);
+    const ageGroup = getSensitivePeriodKey(grade);
+    const sp = TRAINING_DB.sensitivePeriods[ageGroup];
+    const goalLabel = '教练自选方案';
+
+    const content = document.getElementById('trainingContent');
+    content.innerHTML = renderTrainingPlan(plan, student, sp, '<div class="weakness-list"><span class="weakness-tag">教练自主选择</span></div>', [], 'general', goalLabel, '');
+    document.getElementById('trainingActions').style.display = 'block';
+    showToast(`自选方案已生成：${totalTime}分钟（热身${warmupTime}+主体${mainTime}+放松${cooldownTime}）`, 'success');
+}
+
+async function exportCustomPlanPDF() {
+    const studentId = document.getElementById('trainingStudentSelect').value;
+    if (!studentId) { showToast('请先选择学生', 'error'); return; }
+    const student = students.find(s => s.id === studentId);
+    if (!student) return;
+    const content = document.getElementById('trainingContent');
+    if (!content.innerHTML.trim()) { showToast('请先生成训练方案', 'error'); return; }
+
+    const html = buildCustomPlanPDFHTML(content.innerHTML, student);
+    const filename = `${student.name}_教练自选训练方案_${new Date().toISOString().slice(0,10)}.pdf`;
+    await exportPDFFromHTML(html, filename);
+}
+
+function buildCustomPlanPDFHTML(innerContent, student) {
+    return `<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: "Microsoft YaHei", "PingFang SC", sans-serif; background: #fff; color: #1f2937; padding: 24px; width: 794px; }
+  .pdf-header { background: linear-gradient(135deg, #059669 0%, #0d9488 100%); color: #fff; border-radius: 12px; padding: 20px 24px; margin-bottom: 20px; -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+  .pdf-header h1 { font-size: 20px; margin-bottom: 6px; }
+  .pdf-header p { font-size: 13px; opacity: 0.9; }
+  h3 { font-size: 16px; margin: 16px 0 8px; color: #1f2937; }
+  h4 { font-size: 14px; margin: 12px 0 6px; color: #374151; }
+  p { font-size: 12px; line-height: 1.7; color: #4b5563; }
+  .exercise-card { border: 1px solid #e5e7eb; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px; }
+  .exercise-card-header { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+  .exercise-name { font-weight: 700; font-size: 13px; }
+  .exercise-difficulty { font-size: 10px; padding: 1px 6px; border-radius: 3px; }
+  .ex-quality-tag { font-size: 10px; padding: 1px 5px; background: #f3f4f6; border-radius: 3px; color: #6b7280; }
+  .ex-eq-tag { font-size: 10px; padding: 1px 5px; background: #ecfdf5; border-radius: 3px; color: #065f46; }
+  .exercise-desc { font-size: 11px; color: #6b7280; line-height: 1.6; margin-bottom: 4px; }
+  .exercise-coaching { font-size: 11px; color: #374151; line-height: 1.6; }
+  .exercise-safety { font-size: 10px; color: #b91c1c; margin-top: 4px; }
+  .timeline-bar { display: flex; gap: 2px; border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+  .timeline-seg { padding: 6px; text-align: center; font-size: 11px; color: #fff; }
+  .timeline-seg.warmup { background: #10b981; }
+  .timeline-seg.main { background: #f59e0b; }
+  .timeline-seg.cooldown { background: #3b82f6; }
+  .badge { font-size: 10px; padding: 1px 6px; border-radius: 3px; }
+  .note-box { padding: 8px 12px; border-radius: 6px; font-size: 11px; margin-bottom: 8px; }
+  .note-info { background: #f0f7ff; border: 1px solid #bfdbfe; color: #1e3a5f; }
+  .pdf-footer { margin-top: 20px; padding-top: 12px; border-top: 1px solid #e5e7eb; text-align: center; font-size: 10px; color: #9ca3af; }
+</style>
+</head>
+<body>
+  <div class="pdf-header">
+    <h1>📋 教练自选训练方案</h1>
+    <p>学生：${student.name} · 年级：${student.grade}年级 · 日期：${new Date().toISOString().slice(0,10)}</p>
+  </div>
+  ${innerContent}
+  <div class="pdf-footer">
+    <span>上门体育教练管理系统 · 教练自选训练方案导出</span>
+  </div>
+</body>
+</html>`;
 }
 
 function onTrainingGoalChange() {
@@ -6331,6 +6582,14 @@ async function exportTrainingPlanPDF() {
     if (!student) return;
     const content = document.getElementById('trainingContent');
     if (!content.innerHTML.trim()) { showToast('请先生成训练方案', 'error'); return; }
+
+    // 教练自选模式使用专用PDF模板
+    if (currentTrainingMode === 'custom') {
+        const html = buildCustomPlanPDFHTML(content.innerHTML, student);
+        const filename = `${student.name}_教练自选训练方案_${new Date().toISOString().slice(0,10)}.pdf`;
+        await exportPDFFromHTML(html, filename);
+        return;
+    }
 
     const html = buildPlanPDFHTML(content.innerHTML, student);
     const filename = `${student.name}_训练方案_${new Date().toISOString().slice(0,10)}.pdf`;

@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>上门体育智能体</title>
-    <link rel="stylesheet" href="styles.css?v=20260715a">
+    <link rel="stylesheet" href="styles.css?v=20260715b">
     <!-- Supabase SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js"></script>
     <!-- 文档解析依赖库 -->
@@ -398,6 +398,7 @@
                         <div class="training-mode-tabs">
                             <button class="mode-tab active" id="modeTabAuto" onclick="switchTrainingMode('auto')">基于体测报告自动生成</button>
                             <button class="mode-tab" id="modeTabManual" onclick="switchTrainingMode('manual')">教练手动选择薄弱项</button>
+                            <button class="mode-tab" id="modeTabCustom" onclick="switchTrainingMode('custom')">教练自选训练动作</button>
                         </div>
 
                         <!-- 自动模式：显示体测分析 -->
@@ -410,6 +411,21 @@
                             <p class="mode-hint">请勾选学生需要重点提升的体能素质（可多选）：</p>
                             <div class="weakness-checkbox-grid" id="weaknessCheckboxGrid"></div>
                             <button class="btn-primary" style="margin-top:12px;" onclick="generateTrainingPlan()">生成训练方案</button>
+                        </div>
+
+                        <!-- 教练自选模式：自主选择训练动作 -->
+                        <div id="customModePanel" class="mode-panel" style="display:none;">
+                            <p class="mode-hint">教练自主选择各阶段训练动作，按分类浏览，勾选后生成方案</p>
+                            <!-- 分类筛选标签 -->
+                            <div id="customCategoryTabs" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;"></div>
+                            <!-- 动作列表 -->
+                            <div id="customExerciseList" style="max-height:400px;overflow-y:auto;border:1px solid #e5e7eb;border-radius:8px;padding:8px;margin-bottom:12px;"></div>
+                            <!-- 已选动作汇总 -->
+                            <div id="customSelectedSummary" style="background:#f9fafb;border:1px solid #e5e7eb;border-radius:8px;padding:12px;margin-bottom:12px;">
+                                <p style="font-size:13px;color:var(--text-light);text-align:center;">请在上方动作列表中勾选训练动作</p>
+                            </div>
+                            <button class="btn-primary" onclick="generateCustomPlan()">📋 生成自选方案</button>
+                            <button class="btn-secondary" onclick="clearCustomSelections()">清空选择</button>
                         </div>
                     </div>
 
@@ -843,8 +859,8 @@
         }
     </script>
     <!-- db.js + app.js（外部引用，带版本号） -->
-    <script src="js/db.js?v=20260715a"></script>
+    <script src="js/db.js?v=20260715b"></script>
     <!-- 应用主逻辑 -->
-    <script src="app.js?v=20260715a"></script>
+    <script src="app.js?v=20260715b"></script>
 </body>
 </html>
